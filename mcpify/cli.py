@@ -2,7 +2,6 @@
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -37,7 +36,8 @@ def detect_command(args) -> None:
 
         print(f"✅ API specification extracted to {output_file}")
         print(f"📊 Detected {len(config.get('tools', []))} tools")
-        print(f"🔧 Project type: {config.get('backend', {}).get('type', 'unknown')}")
+        backend_type = config.get("backend", {}).get("type", "unknown")
+        print(f"🔧 Project type: {backend_type}")
 
         # Validate the generated configuration
         from .validate import validate_config_dict
@@ -111,26 +111,55 @@ def view_command(args) -> None:
         sys.exit(1)
 
 
-def start_command(config_path: str) -> None:
-    """Start the MCP server with the given config."""
-    if not os.path.exists(config_path):
-        print(f"Error: Config file '{config_path}' does not exist.")
+def serve_command(args) -> None:
+    """Serve MCP server directly."""
+    config_file = Path(args.config_file)
+
+    if not config_file.exists():
+        print(f"❌ Error: Configuration file does not exist: {config_file}")
         sys.exit(1)
 
     try:
-        with open(config_path) as f:
+        with open(config_file, encoding="utf-8") as f:
             config = json.load(f)
 
-        print(f"Starting MCP server for {config.get('name', 'Unknown')}...")
-        MCPWrapper(config_path).run()
+        # Direct serve mode
+        print(f"🚀 Starting MCP server for {config.get('name', 'Unknown')}...")
+        print(f"📡 Mode: {args.mode}")
+
+        wrapper = MCPWrapper(str(config_file))
+
+        if args.mode == "stdio":
+            # Use existing wrapper for stdio mode
+            wrapper.run()
+        elif args.mode == "streamable-http":
+            # Use wrapper with HTTP mode
+            mcp_server = wrapper.server()
+
+            # Start backend if needed
+            if wrapper.adapter:
+                import asyncio
+
+                asyncio.run(wrapper.start_backend())
+
+            try:
+                mcp_server.run(transport="sse", host=args.host, port=args.port)
+            finally:
+                if wrapper.adapter:
+                    import asyncio
+
+                    asyncio.run(wrapper.stop_backend())
+        else:
+            print(f"❌ Error: Unsupported mode '{args.mode}'")
+            sys.exit(1)
 
     except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON in config file: {e}")
+        print(f"❌ Error: Invalid JSON in config file: {e}")
         sys.exit(1)
     except KeyboardInterrupt:
-        print("\nServer stopped.")
+        print("\n🛑 Server stopped.")
     except Exception as e:
-        print(f"Error starting server: {e}")
+        print(f"❌ Error starting server: {e}")
         sys.exit(1)
 
 
@@ -163,7 +192,10 @@ def validate_command(args) -> None:
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="MCPify - Automatically detect APIs and generate MCP server configurations"
+        description=(
+            "MCPify - Automatically detect APIs and generate "
+            "MCP server configurations"
+        )
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -189,12 +221,20 @@ def main() -> None:
         "--verbose", "-v", action="store_true", help="Show detailed validation results"
     )
 
-    # Start command
-    start_parser = subparsers.add_parser(
-        "start", help="Start MCP server with configuration file"
+    # Serve command
+    serve_parser = subparsers.add_parser("serve", help="Start MCP server")
+    serve_parser.add_argument("config_file", help="Path to the configuration file")
+    serve_parser.add_argument(
+        "--mode",
+        choices=["stdio", "streamable-http"],
+        default="stdio",
+        help="Server mode (default: stdio)",
     )
-    start_parser.add_argument(
-        "config_file", help="Path to the configuration file to start server with"
+    serve_parser.add_argument(
+        "--host", default="localhost", help="Host for HTTP mode (default: localhost)"
+    )
+    serve_parser.add_argument(
+        "--port", type=int, default=8080, help="Port for HTTP mode (default: 8080)"
     )
 
     # Validate command
@@ -214,8 +254,8 @@ def main() -> None:
         detect_command(args)
     elif args.command == "view":
         view_command(args)
-    elif args.command == "start":
-        start_command(args.config_file)
+    elif args.command == "serve":
+        serve_command(args)
     elif args.command == "validate":
         validate_command(args)
     else:

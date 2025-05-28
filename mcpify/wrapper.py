@@ -85,7 +85,8 @@ class MCPWrapper:
                 command = self.config.get("command")
                 if not command:
                     return (
-                        "Error: No backend adapter configured and no command specified"
+                        "Error: No backend adapter configured and no command "
+                        "specified"
                     )
 
                 args_template = tool_config.get("args", [])

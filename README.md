@@ -11,12 +11,12 @@
   - **CLI Tools**: Detect argparse-based command-line interfaces
   - **Web APIs**: Support for Flask and FastAPI applications with route detection
   - **Interactive Commands**: Identify command-based interactive applications
-- **MCP Server Generation**: Convert any project into a fully functional MCP server
-- **Multiple Backend Support**: Works with command-line tools, HTTP APIs, and more
+- **Flexible MCP Server**: Multiple ways to start and control MCP servers
+- **Multiple Backend Support**: Works with command-line tools, HTTP APIs, Python modules, and more
 - **Configuration Validation**: Built-in validation system to ensure correct configurations
 - **Parameter Detection**: Automatically extract route parameters, query parameters, and CLI arguments
 - **Zero Code Changes**: Transform existing projects without modifying their source code
-- **Flexible Configuration**: Fine-tune tool definitions and parameters through JSON configuration
+- **Professional Architecture**: Clean separation between detection, configuration, and server execution
 
 ## 📦 Installation
 
@@ -34,241 +34,207 @@ cd mcpify
 pip install -e .
 ```
 
+## 🏗️ Project Architecture
+
+```
+mcpify/
+├── mcpify/                    # Core package
+│   ├── cli.py                 # CLI interface (mcpify command)
+│   ├── __main__.py            # Module entry point
+│   ├── wrapper.py             # MCP protocol wrapper
+│   ├── backend.py             # Backend adapters
+│   ├── detect.py              # API detection engine
+│   └── validate.py            # Configuration validation
+├── bin/                       # Standalone executables
+│   └── mcp-serve              # Independent server script
+├── examples/                  # Example configurations
+│   ├── fastapi-example.json
+│   ├── python-module-example.json
+│   └── commandline-example.json
+├── docs/                      # Documentation
+│   └── usage.md               # Detailed usage guide
+└── tests/                     # Test suite
+```
+
 ## 🛠️ Quick Start
 
 ### 1. Detect APIs in your project
 
 ```bash
-mcpify detect /path/to/your/project
+mcpify detect /path/to/your/project --output config.json
 ```
 
-This will analyze your project and generate a `project-name.json` configuration file containing the detected API structure.
+This analyzes your project and generates a configuration file containing the detected API structure.
 
-### 2. View the configuration
+### 2. View and validate the configuration
 
 ```bash
-mcpify view project-name.json
+mcpify view config.json
+mcpify validate config.json
 ```
 
 This validates the generated configuration and shows any warnings or errors.
 
 ### 3. Start the MCP server
 
+MCPify provides multiple ways to start MCP servers:
+
 ```bash
-mcpify start project-name.json
+# Method 1: Using mcpify CLI
+mcpify serve config.json
+
+# Method 2: Using standalone mcp-serve script (recommended for MCP clients)
+./bin/mcp-serve config.json
+
+# Method 3: Direct module invocation
+python -m mcpify serve config.json
+
+# HTTP mode for web integration
+./bin/mcp-serve config.json --mode streamable-http --port 8080
 ```
 
-Your project is now running as an MCP server, ready to be used by AI assistants and other MCP clients!
+## 🎯 Usage Scenarios
 
-## 📋 Usage Examples
-
-### Command-Line Tool Integration
-
-For CLI tools with argparse:
-
-```python
-# cli_tool.py
-import argparse
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--hello', action='store_true', help='Say hello')
-    parser.add_argument('--echo', type=str, help='Echo a message')
-    parser.add_argument('--add', nargs=2, type=float, help='Add two numbers')
-    args = parser.parse_args()
-
-    if args.hello:
-        print("Hello!")
-    elif args.echo:
-        print(f"Echo: {args.echo}")
-    elif args.add:
-        print(f"Result: {args.add[0] + args.add[1]}")
+### For Developers (API Detection & Testing)
+```bash
+# Detect and test your APIs
+mcpify detect my-project --output my-project.json
+mcpify view my-project.json
+mcpify serve my-project.json
 ```
 
-MCPify automatically generates:
+### For MCP Clients (Server Integration)
+```bash
+# MCP clients can start servers directly
+./bin/mcp-serve config.json                    # stdio mode
+./bin/mcp-serve config.json --mode streamable-http  # HTTP mode
+```
+
+### For Production Deployment
+```bash
+# Deploy as HTTP server
+./bin/mcp-serve config.json --mode streamable-http --host 0.0.0.0 --port 8080
+```
+
+## 📋 Backend Types & Examples
+
+### FastAPI/Flask Web Applications
 ```json
 {
+  "name": "my-web-api",
+  "description": "Web API server",
+  "backend": {
+    "type": "fastapi",
+    "base_url": "http://localhost:8000"
+  },
+  "tools": [
+    {
+      "name": "get_user",
+      "description": "Get user information",
+      "endpoint": "/users/{user_id}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "user_id",
+          "type": "string",
+          "description": "User ID"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Python Modules
+```json
+{
+  "name": "my-python-tools",
+  "description": "Python module backend",
+  "backend": {
+    "type": "python",
+    "module_path": "./my_module.py"
+  },
+  "tools": [
+    {
+      "name": "calculate",
+      "description": "Perform calculation",
+      "function": "calculate",
+      "parameters": [
+        {
+          "name": "expression",
+          "type": "string",
+          "description": "Mathematical expression"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Command-Line Tools
+```json
+{
+  "name": "my-cli-tool",
+  "description": "Command line tool backend",
   "backend": {
     "type": "commandline",
     "config": {
       "command": "python3",
-      "args": ["cli_tool.py"],
+      "args": ["./my_script.py"],
       "cwd": "."
     }
   },
   "tools": [
     {
-      "name": "hello",
-      "description": "Say hello",
-      "args": ["--hello"],
-      "parameters": []
-    },
-    {
-      "name": "echo",
-      "description": "Echo a message",
-      "args": ["--echo", "{message}"],
+      "name": "process_data",
+      "description": "Process data with CLI tool",
+      "args": ["--process", "{input_file}"],
       "parameters": [
         {
-          "name": "message",
+          "name": "input_file",
           "type": "string",
-          "description": "The message value"
+          "description": "Input file path"
         }
       ]
     }
   ]
 }
 ```
-
-### Interactive Command Applications
-
-MCPify can detect interactive command-based applications:
-
-```python
-# server.py
-def main():
-    while True:
-        line = input()
-        if line.lower() == 'hello':
-            print("Hello there!")
-        elif line.lower().startswith('echo '):
-            message = line[5:]
-            print(f"Echo: {message}")
-        elif line.lower() == 'quit':
-            break
-```
-
-Detected commands:
-- `hello` - Simple command
-- `echo` - Command with message parameter
-
-### FastAPI Application
-
-MCPify can automatically detect FastAPI applications and their endpoints:
-
-```python
-# main.py
-from fastapi import FastAPI
-
-app = FastAPI()
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@app.get("/todos/{todo_id}")
-async def get_todo(todo_id: int):
-    return {"id": todo_id, "title": "Sample todo"}
-
-@app.post("/todos")
-async def create_todo(todo: dict):
-    return {"id": 1, **todo}
-```
-
-MCPify will detect:
-- Route parameters (`{todo_id}`)
-- HTTP methods (GET, POST, PUT, DELETE, PATCH)
-- Query parameters
-- Proper parameter types
-
-Generated configuration:
-```json
-{
-  "name": "fastapi-app",
-  "description": "FastAPI application",
-  "backend": {
-    "type": "http",
-    "config": {
-      "base_url": "http://localhost:8000",
-      "timeout": 30
-    }
-  },
-  "tools": [
-    {
-      "name": "root",
-      "description": "GET / endpoint",
-      "args": ["/"],
-      "parameters": []
-    },
-    {
-      "name": "get_todo",
-      "description": "GET /todos/{todo_id} endpoint",
-      "args": ["/todos/{todo_id}", "{todo_id}"],
-      "parameters": [
-        {
-          "name": "todo_id",
-          "type": "integer",
-          "description": "The todo_id parameter"
-        }
-      ]
-    }
-  ]
-}
-```
-
 
 ## 🔧 Configuration
 
-MCPify uses JSON configuration files to define how your project should be exposed as an MCP server.
+### Supported Backend Types
+- **`fastapi`**: FastAPI web applications
+- **`python`**: Python modules and functions
+- **`commandline`**: Command-line tools and scripts
+- **`external`**: External programs and services
 
-### Backend Types
-
-- **commandline**: Execute command-line tools
-- **http**: Call HTTP REST APIs
-- **websocket**: Connect to WebSocket endpoints
+### Server Modes
+- **`stdio`**: Standard input/output (default MCP mode)
+- **`streamable-http`**: HTTP Server-Sent Events mode
 
 ### Parameter Types
+- `string`, `integer`, `number`, `boolean`, `array`
+- Automatic type detection from source code
+- Custom validation rules
 
-MCPify supports various parameter types:
-- `string`: Text input
-- `integer`: Whole number input
-- `number`/`float`: Numeric input
-- `boolean`: True/false values
-- `array`: List of values
+## 📁 Examples
 
-### Validation
+Explore the `examples/` directory for ready-to-use configurations:
 
-The built-in validation system checks:
-- Required fields presence
-- Parameter type consistency
-- Backend configuration validity
-- Tool name uniqueness
-- Parameter usage in arguments
-
-## 📁 Example Projects
-
-The repository includes several example projects:
-
-### FastAPI Todo Server
 ```bash
-cd example-projects/fastapi-todo-server
-uvicorn main:app --reload
-# In another terminal:
-mcpify detect . --output todo-api.json
-mcpify validate todo-api.json
+# View example configurations
+mcpify view examples/fastapi-example.json
+mcpify view examples/python-module-example.json
+mcpify view examples/commandline-example.json
+
+# Test with examples
+./bin/mcp-serve examples/fastapi-example.json
 ```
-
-Features:
-- Complete CRUD API for todo management
-- Path parameters (`{todo_id}`)
-- Query parameters for filtering
-- Automatic OpenAPI documentation
-
-### Python Server Project
-```bash
-cd example-projects/python-server-project
-python server.py &
-mcpify detect . --output server-api.json
-```
-
-Features:
-- Interactive command processing
-- Simple text-based protocol
-- Multiple command types
 
 ## 🧪 Development
 
 ### Running Tests
-
 ```bash
 # Run all tests
 python -m pytest tests/ -v
@@ -276,61 +242,77 @@ python -m pytest tests/ -v
 # Run with coverage
 python -m pytest tests/ --cov=mcpify --cov-report=html
 
-# Run specific test files
-python -m pytest tests/test_detect.py tests/test_validate.py -v
+# Run specific tests
+python -m pytest tests/test_detect.py -v
 ```
-
-### Project Structure
-
-```
-mcpify/
-├── mcpify/           # Main package
-│   ├── cli.py        # Command-line interface
-│   ├── detect.py     # API detection engine
-│   ├── validate.py   # Configuration validation
-│   ├── backend.py    # Backend abstraction layer
-│   ├── wrapper.py    # MCP protocol wrapper
-│   └── __init__.py
-├── tests/            # Test suite
-│   ├── test_detect.py
-│   ├── test_validate.py
-│   └── __init__.py
-├── example-projects/ # Example configurations
-│   ├── fastapi-todo-server/
-│   └── python-server-project/
-├── README.md
-└── pyproject.toml
-```
-
-### Available Commands
-
-```bash
-# Detect APIs in a project
-mcpify detect <project_path> [--output <file>] [--openai-key <key>]
-
-# Validate a configuration file
-mcpify validate <config_file> [--verbose]
-
-# Start an MCP server (coming soon)
-mcpify start <config_file>
-```
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
-
-- Setting up the development environment
-- Running tests and linting
-- Submitting pull requests
-- Reporting issues
 
 ### Development Setup
-
 ```bash
 git clone https://github.com/your-username/mcpify.git
 cd mcpify
 pip install -e ".[dev]"
 python -m pytest tests/ -v
+```
+
+### Available Commands
+
+#### MCPify CLI Commands
+```bash
+mcpify detect <project_path> [--output <file>]    # Detect APIs
+mcpify view <config_file>                         # View configuration
+mcpify validate <config_file>                     # Validate configuration
+mcpify serve <config_file> [--mode <mode>]        # Start server
+```
+
+#### MCP Server Commands
+```bash
+./bin/mcp-serve <config_file>                          # Start stdio server
+./bin/mcp-serve <config_file> --mode streamable-http   # Start HTTP server
+./bin/mcp-serve <config_file> --host <host> --port <port>  # Custom host/port
+```
+
+## 🚀 Deployment Options
+
+### 1. Package Installation
+```bash
+pip install mcpify
+# Use mcpify for development, copy bin/mcp-serve for production
+```
+
+### 2. Standalone Script
+```bash
+# Copy standalone script
+cp bin/mcp-serve /usr/local/bin/
+chmod +x /usr/local/bin/mcp-serve
+mcp-serve config.json
+```
+
+### 3. Docker Deployment
+```dockerfile
+FROM python:3.10-slim
+COPY . /app
+WORKDIR /app
+RUN pip install .
+CMD ["./bin/mcp-serve", "config.json", "--mode", "streamable-http", "--host", "0.0.0.0"]
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our development setup above and:
+
+- Fork the repository
+- Create a feature branch
+- Add tests for new functionality
+- Submit a pull request
+
+### Code Quality
+```bash
+# Linting and formatting
+ruff check mcpify/
+ruff format mcpify/
+
+# Type checking
+mypy mcpify/
 ```
 
 ## 📄 License
@@ -344,10 +326,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: [Full documentation](https://mcpify.readthedocs.io/)
+- **Documentation**: See `docs/usage.md` for detailed usage instructions
+- **Examples**: Check the `examples/` directory for configuration templates
 - **Issues**: [GitHub Issues](https://github.com/your-username/mcpify/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/your-username/mcpify/discussions)
-
----
-
-Made with ❤️ by the MCPify team

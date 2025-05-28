@@ -39,25 +39,25 @@ You can then type commands and press Enter to see the server's response.
 - `hello`: Prints a greeting message.
 
   **Input**: `hello`
-  
+
   **Output**: `Hello there! Server received your message.`
 
 - `echo <message>`: Echoes the provided message (everything after `echo `).
 
   **Input**: `echo Hello, World!`
-  
+
   **Output**: `Echo: Hello, World!`
 
 - `time`: Displays the current time in `YYYY-MM-DD HH:MM:SS` format.
 
   **Input**: `time`
-  
+
   **Example Output**: `Current time: 2025-05-28 16:23:45`
 
 - `quit`: Shuts down the server.
 
   **Input**: `quit`
-  
+
   **Output**: `Server shutting down...`
 
 ### Notes
@@ -66,7 +66,7 @@ You can then type commands and press Enter to see the server's response.
 - Unknown commands will result in a message indicating the input was not recognized:
 
   **Input**: `invalid`
-  
+
   **Output**: `Server received: 'invalid' - Unknown command`
 
 - The server flushes output immediately (`flush=True`) to ensure real-time responses.
