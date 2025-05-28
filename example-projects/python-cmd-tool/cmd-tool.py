@@ -2,6 +2,7 @@
 import argparse
 import time
 
+
 def main():
     # 设置命令行参数解析器
     parser = argparse.ArgumentParser(
@@ -9,28 +10,13 @@ def main():
     )
     # 定义互斥组，确保只接受一个命令
     group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--hello", action="store_true", help="Print a greeting message.")
     group.add_argument(
-        "--hello",
-        action="store_true",
-        help="Print a greeting message."
+        "--echo", type=str, metavar="MESSAGE", help="Echo the provided message."
     )
+    group.add_argument("--time", action="store_true", help="Print the current time.")
     group.add_argument(
-        "--echo",
-        type=str,
-        metavar="MESSAGE",
-        help="Echo the provided message."
-    )
-    group.add_argument(
-        "--time",
-        action="store_true",
-        help="Print the current time."
-    )
-    group.add_argument(
-        "--add",
-        nargs=2,
-        type=float,
-        metavar=("NUM1", "NUM2"),
-        help="Add two numbers."
+        "--add", nargs=2, type=float, metavar=("NUM1", "NUM2"), help="Add two numbers."
     )
 
     # 解析命令行参数
@@ -50,10 +36,10 @@ def main():
     else:
         print("Unknown command")
 
+
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
         print("CLI tool: Interrupted, exiting...")
         exit(1)
-
