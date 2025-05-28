@@ -3,7 +3,7 @@
     "type": "commandline",
     "config": {
       "command": "python3",
-      "args": ["/Users/jinx0a/Repo/mcpify/example-projects/python-cmd-tool/cmd-tool.py"],
+      "args": ["example-projects/python-cmd-tool/cmd-tool.py"],
       "cwd": "."
     }
   },

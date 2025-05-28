@@ -168,6 +168,10 @@ class MCPWrapper:
         if self.adapter:
             await self.adapter.stop()
 
+    def server(self):
+        """Run MCP server"""
+        return self.mcp
+
     def run(self):
         """Start MCP server"""
         # If adapter exists, start backend service first
