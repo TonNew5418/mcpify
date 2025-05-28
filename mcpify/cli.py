@@ -11,7 +11,7 @@ from .validate import print_validation_results, validate_config_file
 from .wrapper import MCPWrapper
 
 
-def detect_command(args):
+def detect_command(args) -> None:
     """Handle the detect command."""
     project_path = Path(args.project_path)
 
@@ -58,22 +58,32 @@ def detect_command(args):
         sys.exit(1)
 
 
-def view_command(config_path: str) -> None:
+def view_command(args) -> None:
     """Visually display the API specification."""
-    if not os.path.exists(config_path):
-        print(f"Error: Config file '{config_path}' does not exist.")
+    config_file = Path(args.config_file)
+
+    if not config_file.exists():
+        print(f"❌ Error: Configuration file does not exist: {config_file}")
         sys.exit(1)
 
+    print(f"Viewing configuration: {config_file}")
+
     try:
-        with open(config_path) as f:
+        with open(config_file, encoding="utf-8") as f:
             config = json.load(f)
 
-        print(f"API Specification: {config.get('name', 'Unknown')}")
-        print(f"Description: {config.get('description', 'No description')}")
-        print("\nTools:")
+        print(f"\n📋 API Specification: {config.get('name', 'Unknown')}")
+        print(f"📝 Description: {config.get('description', 'No description')}")
+
+        # Show backend information
+        backend = config.get("backend", {})
+        backend_type = backend.get("type", "unknown")
+        print(f"🔧 Backend Type: {backend_type}")
+
+        print(f"\n🛠️  Tools ({len(config.get('tools', []))}):")
 
         for tool in config.get("tools", []):
-            print(f"  - {tool.get('name', 'Unknown')}")
+            print(f"  • {tool.get('name', 'Unknown')}")
             desc = tool.get("description", "No description")
             print(f"    Description: {desc}")
             print(f"    Args: {tool.get('args', [])}")
@@ -86,8 +96,18 @@ def view_command(config_path: str) -> None:
                     print(f"      - {name} ({ptype}): {desc}")
             print()
 
+        # Validate the configuration and show results
+        from .validate import print_validation_results, validate_config_dict
+
+        result = validate_config_dict(config)
+        print("📊 Validation Results:")
+        print_validation_results(result, verbose=args.verbose)
+
     except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON in config file: {e}")
+        print(f"❌ Error: Invalid JSON in config file: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error viewing configuration: {e}")
         sys.exit(1)
 
 
@@ -114,7 +134,7 @@ def start_command(config_path: str) -> None:
         sys.exit(1)
 
 
-def validate_command(args):
+def validate_command(args) -> None:
     """Handle the validate command."""
     config_file = Path(args.config_file)
 
@@ -158,6 +178,25 @@ def main() -> None:
         "--openai-key", help="OpenAI API key for enhanced analysis"
     )
 
+    # View command
+    view_parser = subparsers.add_parser(
+        "view", help="View and validate MCP configuration file"
+    )
+    view_parser.add_argument(
+        "config_file", help="Path to the configuration file to view"
+    )
+    view_parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Show detailed validation results"
+    )
+
+    # Start command
+    start_parser = subparsers.add_parser(
+        "start", help="Start MCP server with configuration file"
+    )
+    start_parser.add_argument(
+        "config_file", help="Path to the configuration file to start server with"
+    )
+
     # Validate command
     validate_parser = subparsers.add_parser(
         "validate", help="Validate MCP configuration file"
@@ -174,9 +213,9 @@ def main() -> None:
     if args.command == "detect":
         detect_command(args)
     elif args.command == "view":
-        view_command(args.config)
+        view_command(args)
     elif args.command == "start":
-        start_command(args.config)
+        start_command(args.config_file)
     elif args.command == "validate":
         validate_command(args)
     else:

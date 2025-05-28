@@ -1,4 +1,4 @@
-# MCPify
+# MCPify - Export all projects as MCP servers!
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -44,10 +44,10 @@ mcpify detect /path/to/your/project
 
 This will analyze your project and generate a `project-name.json` configuration file containing the detected API structure.
 
-### 2. Validate the configuration
+### 2. View the configuration
 
 ```bash
-mcpify validate project-name.json --verbose
+mcpify view project-name.json
 ```
 
 This validates the generated configuration and shows any warnings or errors.
