@@ -698,7 +698,7 @@ Return a JSON array with the enhanced tool specifications in this format:
 """
 
             response = self.openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4.1",
                 messages=[
                     {
                         "role": "system",

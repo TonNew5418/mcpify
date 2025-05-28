@@ -1,6 +1,6 @@
 [project]
 name = "mcpify"
-version = "0.1.2"
+dynamic = ["version"]
 description = "Turn existing projects into MCP servers"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -68,6 +68,9 @@ mcpify = "mcpify.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "mcpify/__init__.py"
 
 # Ruff configuration
 [tool.ruff]

@@ -47,10 +47,7 @@ mcpify/
 │   └── validate.py            # Configuration validation
 ├── bin/                       # Standalone executables
 │   └── mcp-serve              # Independent server script
-├── examples/                  # Example configurations
-│   ├── fastapi-example.json
-│   ├── python-module-example.json
-│   └── commandline-example.json
+├── examples/                  # Example projects
 ├── docs/                      # Documentation
 │   └── usage.md               # Detailed usage guide
 └── tests/                     # Test suite

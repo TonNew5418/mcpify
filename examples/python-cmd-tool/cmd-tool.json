@@ -3,7 +3,7 @@
     "type": "commandline",
     "config": {
       "command": "python3",
-      "args": ["example-projects/python-cmd-tool/cmd-tool.py"],
+      "args": ["examples/python-cmd-tool/cmd-tool.py"],
       "cwd": "."
     }
   },

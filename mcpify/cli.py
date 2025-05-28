@@ -143,7 +143,10 @@ def serve_command(args) -> None:
                 asyncio.run(wrapper.start_backend())
 
             try:
-                mcp_server.run(transport="sse", host=args.host, port=args.port)
+                print(f"🌐 Starting HTTP server on {args.host}:{args.port}")
+                mcp_server.settings.host = args.host
+                mcp_server.settings.port = args.port
+                mcp_server.run(transport="streamable-http")
             finally:
                 if wrapper.adapter:
                     import asyncio
@@ -204,7 +207,9 @@ def main() -> None:
     detect_parser = subparsers.add_parser("detect", help="Detect API from project")
     detect_parser.add_argument("project_path", help="Path to the project directory")
     detect_parser.add_argument(
-        "--output", "-o", help="Output file path (default: <project-name>.json)"
+        "--output",
+        "-o",
+        help="Output file path (default: <project-name>.json)",
     )
     detect_parser.add_argument(
         "--openai-key", help="OpenAI API key for enhanced analysis"
@@ -218,7 +223,10 @@ def main() -> None:
         "config_file", help="Path to the configuration file to view"
     )
     view_parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Show detailed validation results"
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Show detailed validation results",
     )
 
     # Serve command
@@ -231,10 +239,15 @@ def main() -> None:
         help="Server mode (default: stdio)",
     )
     serve_parser.add_argument(
-        "--host", default="localhost", help="Host for HTTP mode (default: localhost)"
+        "--host",
+        default="localhost",
+        help="Host for HTTP mode (default: localhost)",
     )
     serve_parser.add_argument(
-        "--port", type=int, default=8080, help="Port for HTTP mode (default: 8080)"
+        "--port",
+        type=int,
+        default=8080,
+        help="Port for HTTP mode (default: 8080)",
     )
 
     # Validate command
@@ -245,7 +258,10 @@ def main() -> None:
         "config_file", help="Path to the configuration file to validate"
     )
     validate_parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Show detailed validation results"
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Show detailed validation results",
     )
 
     args = parser.parse_args()
