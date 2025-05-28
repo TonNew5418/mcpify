@@ -45,8 +45,6 @@ mcpify/
 │   ├── backend.py             # Backend adapters
 │   ├── detect.py              # API detection engine
 │   └── validate.py            # Configuration validation
-├── bin/                       # Standalone executables
-│   └── mcp-serve              # Independent server script
 ├── examples/                  # Example projects
 ├── docs/                      # Documentation
 │   └── usage.md               # Detailed usage guide
@@ -77,17 +75,19 @@ This validates the generated configuration and shows any warnings or errors.
 MCPify provides multiple ways to start MCP servers:
 
 ```bash
-# Method 1: Using mcpify CLI
+# Method 1: Using mcpify CLI (recommended)
 mcpify serve config.json
 
-# Method 2: Using standalone mcp-serve script (recommended for MCP clients)
-./bin/mcp-serve config.json
-
-# Method 3: Direct module invocation
+# Method 2: Direct module invocation
 python -m mcpify serve config.json
 
 # HTTP mode for web integration
-./bin/mcp-serve config.json --mode streamable-http --port 8080
+mcpify serve config.json --mode streamable-http --port 8080
+
+# Example with provided configurations
+mcpify serve examples/python-server-project/server.json
+mcpify serve examples/python-server-project/server.json --mode streamable-http --port 8888
+mcpify serve examples/python-cmd-tool/cmd-tool.json
 ```
 
 ## 🎯 Usage Scenarios
@@ -103,14 +103,14 @@ mcpify serve my-project.json
 ### For MCP Clients (Server Integration)
 ```bash
 # MCP clients can start servers directly
-./bin/mcp-serve config.json                    # stdio mode
-./bin/mcp-serve config.json --mode streamable-http  # HTTP mode
+mcpify serve config.json                    # stdio mode
+mcpify serve config.json --mode streamable-http  # HTTP mode
 ```
 
 ### For Production Deployment
 ```bash
 # Deploy as HTTP server
-./bin/mcp-serve config.json --mode streamable-http --host 0.0.0.0 --port 8080
+mcpify serve config.json --mode streamable-http --host 0.0.0.0 --port 8080
 ```
 
 ## 📋 Backend Types & Examples
@@ -215,18 +215,85 @@ mcpify serve my-project.json
 - Automatic type detection from source code
 - Custom validation rules
 
+## ⚙️ Server Configuration
+
+### Command Line Options
+
+```bash
+# Basic usage
+mcpify serve config.json
+
+# Specify server mode
+mcpify serve config.json --mode stdio              # Default mode
+mcpify serve config.json --mode streamable-http    # HTTP mode
+
+# Configure host and port (HTTP mode only)
+mcpify serve config.json --mode streamable-http --host localhost --port 8080
+mcpify serve config.json --mode streamable-http --host 0.0.0.0 --port 9999
+
+# Real examples with provided configurations
+mcpify serve examples/python-server-project/server.json
+mcpify serve examples/python-server-project/server.json --mode streamable-http --port 8888
+mcpify serve examples/python-cmd-tool/cmd-tool.json --mode stdio
+```
+
+### Server Modes Explained
+
+#### STDIO Mode (Default)
+- Uses standard input/output for communication
+- Best for local MCP clients and development
+- No network configuration needed
+
+```bash
+mcpify serve config.json
+# or explicitly
+mcpify serve config.json --mode stdio
+```
+
+#### Streamable HTTP Mode
+- Uses HTTP with Server-Sent Events
+- Best for web integration and remote clients
+- Requires host and port configuration
+
+```bash
+# Local development
+mcpify serve config.json --mode streamable-http --port 8080
+
+# Production deployment
+mcpify serve config.json --mode streamable-http --host 0.0.0.0 --port 8080
+```
+
+### Environment Integration
+
+#### For MCP Clients
+```bash
+# Claude Desktop or other MCP clients can invoke:
+mcpify serve your-config.json
+```
+
+#### For Web Applications
+```bash
+# Start HTTP server for web integration
+mcpify serve your-config.json --mode streamable-http --port 8080
+# Then connect from web clients to http://localhost:8080
+```
+
 ## 📁 Examples
 
 Explore the `examples/` directory for ready-to-use configurations:
 
 ```bash
 # View example configurations
-mcpify view examples/fastapi-example.json
-mcpify view examples/python-module-example.json
-mcpify view examples/commandline-example.json
+mcpify view examples/python-server-project/server.json
+mcpify view examples/python-cmd-tool/cmd-tool.json
 
-# Test with examples
-./bin/mcp-serve examples/fastapi-example.json
+# Test with examples - STDIO mode (default)
+mcpify serve examples/python-server-project/server.json
+mcpify serve examples/python-cmd-tool/cmd-tool.json
+
+# Test with examples - HTTP mode
+mcpify serve examples/python-server-project/server.json --mode streamable-http --port 8888
+mcpify serve examples/python-cmd-tool/cmd-tool.json --mode streamable-http --port 9999
 ```
 
 ## 🧪 Development
@@ -261,27 +328,19 @@ mcpify validate <config_file>                     # Validate configuration
 mcpify serve <config_file> [--mode <mode>]        # Start server
 ```
 
-#### MCP Server Commands
-```bash
-./bin/mcp-serve <config_file>                          # Start stdio server
-./bin/mcp-serve <config_file> --mode streamable-http   # Start HTTP server
-./bin/mcp-serve <config_file> --host <host> --port <port>  # Custom host/port
-```
-
 ## 🚀 Deployment Options
 
 ### 1. Package Installation
 ```bash
 pip install mcpify
-# Use mcpify for development, copy bin/mcp-serve for production
+# Use mcpify serve for all scenarios
 ```
 
-### 2. Standalone Script
+### 2. Module Invocation
 ```bash
-# Copy standalone script
-cp bin/mcp-serve /usr/local/bin/
-chmod +x /usr/local/bin/mcp-serve
-mcp-serve config.json
+# Run as Python module
+python -m mcpify serve config.json
+python -m mcpify serve config.json --mode streamable-http --port 8080
 ```
 
 ### 3. Docker Deployment
@@ -290,7 +349,16 @@ FROM python:3.10-slim
 COPY . /app
 WORKDIR /app
 RUN pip install .
-CMD ["./bin/mcp-serve", "config.json", "--mode", "streamable-http", "--host", "0.0.0.0"]
+CMD ["mcpify", "serve", "config.json", "--mode", "streamable-http", "--host", "0.0.0.0", "--port", "8080"]
+```
+
+### 4. Production HTTP Server
+```bash
+# Start HTTP server for production
+mcpify serve config.json --mode streamable-http --host 0.0.0.0 --port 8080
+
+# With custom configuration
+mcpify serve config.json --mode streamable-http --host 127.0.0.1 --port 9999
 ```
 
 ## 🤝 Contributing

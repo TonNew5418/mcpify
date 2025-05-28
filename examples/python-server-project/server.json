@@ -1,6 +1,8 @@
 {
+  "name": "python-server-project",
+  "description": "Example Python server project with interactive commands",
   "backend": {
-    "type": "server",
+    "type": "commandline",
     "config": {
       "command": "python3",
       "args": ["examples/python-server-project/server.py"],
@@ -13,13 +15,13 @@
     {
       "name": "say_hello",
       "description": "Prints a greeting message using server",
-      "command": "hello",
+      "args": ["hello"],
       "parameters": []
     },
     {
       "name": "echo_message",
       "description": "Echo the input message using server",
-      "command": "echo {message}",
+      "args": ["echo", "{message}"],
       "parameters": [
         {
           "name": "message",
@@ -31,7 +33,7 @@
     {
       "name": "get_time",
       "description": "Returns the current time using server",
-      "command": "time",
+      "args": ["time"],
       "parameters": []
     }
   ]

@@ -1,4 +1,6 @@
 {
+  "name": "python-cmd-tool",
+  "description": "Example Python command-line tool with various operations",
   "backend": {
     "type": "commandline",
     "config": {
@@ -39,12 +41,12 @@
       "parameters": [
         {
           "name": "num1",
-          "type": "float",
+          "type": "number",
           "description": "The first number to add"
         },
         {
           "name": "num2",
-          "type": "float",
+          "type": "number",
           "description": "The second number to add"
         }
       ]
