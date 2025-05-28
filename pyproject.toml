@@ -4,11 +4,40 @@ version = "0.1.0"
 description = "Turn existing projects into MCP servers"
 readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Xiaotian Jin", email = "jin.xiaotian.kim@gmail.com"},
+]
+maintainers = [
+    {name = "Xiaotian Jin", email = "jin.xiaotian.kim@gmail.com"},
+]
+keywords = ["mcp", "model-context-protocol", "api", "server", "automation", "ai"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
 dependencies = [
     "aiohttp>=3.12.2",
     "mcp[cli]>=1.9.1",
     "openai>=1.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/mugglejinx/mcpify"
+Documentation = "https://github.com/muggleji/mcpify#readme"
+Repository = "https://github.com/muggleji/mcpify.git"
+"Bug Tracker" = "https://github.com/muggleji/mcpify/issues"
+Changelog = "https://github.com/muggleji/mcpify/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 examples = [
@@ -26,6 +55,8 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.5.0",
     "pre-commit>=3.0.0",
+    "bandit[toml]>=1.7.0",
+    "safety>=2.3.0",
 ]
 all = [
     "mcpify[examples,dev]",
