@@ -1,0 +1,38 @@
+{
+  "backend": {
+    "type": "server",
+    "config": {
+      "command": "python3",
+      "args": ["my-tool/tool-server.py"],
+      "cwd": ".",
+      "startup_timeout": 3,
+      "ready_signal": "Server started. Waiting for input..."
+    }
+  },
+  "tools": [
+    {
+      "name": "say_hello",
+      "description": "Prints a greeting message using server",
+      "command": "hello",
+      "parameters": []
+    },
+    {
+      "name": "echo_message",
+      "description": "Echo the input message using server",
+      "command": "echo {message}",
+      "parameters": [
+        {
+          "name": "message",
+          "type": "string",
+          "description": "The message to echo"
+        }
+      ]
+    },
+    {
+      "name": "get_time",
+      "description": "Returns the current time using server",
+      "command": "time",
+      "parameters": []
+    }
+  ]
+} 

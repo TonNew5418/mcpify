@@ -1,0 +1,17 @@
+[project]
+name = "mcpify"
+version = "0.1.0"
+description = "Turn existing projects into MCP servers"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiohttp>=3.12.2",
+    "mcp[cli]>=1.9.1",
+]
+
+[project.scripts]
+mcpify = "mcpify.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

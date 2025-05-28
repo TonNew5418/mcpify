@@ -1,0 +1,53 @@
+{
+  "backend": {
+    "type": "commandline",
+    "config": {
+      "command": "python3",
+      "args": ["/Users/jinx0a/Repo/mcpify/example-projects/python-cmd-tool/cmd-tool.py"],
+      "cwd": "."
+    }
+  },
+  "tools": [
+    {
+      "name": "say_hello",
+      "description": "Prints a greeting message using tool.py",
+      "args": ["--hello"],
+      "parameters": []
+    },
+    {
+      "name": "echo_message",
+      "description": "Echo the input message using tool.py",
+      "args": ["--echo", "{message}"],
+      "parameters": [
+        {
+          "name": "message",
+          "type": "string",
+          "description": "The message to echo"
+        }
+      ]
+    },
+    {
+      "name": "get_time",
+      "description": "Returns the current time using tool.py",
+      "args": ["--time"],
+      "parameters": []
+    },
+    {
+      "name": "add_numbers",
+      "description": "Add two numbers together",
+      "args": ["--add", "{num1}", "{num2}"],
+      "parameters": [
+        {
+          "name": "num1",
+          "type": "float",
+          "description": "The first number to add"
+        },
+        {
+          "name": "num2",
+          "type": "float",
+          "description": "The second number to add"
+        }
+      ]
+    }
+  ]
+}
