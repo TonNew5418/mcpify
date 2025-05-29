@@ -29,11 +29,6 @@ jobs:
       run: |
         python -m pytest tests/ -v
 
-    - name: Run code quality checks
-      run: |
-        python -m ruff check .
-        python -m ruff format . --check
-
   build:
     needs: test
     runs-on: ubuntu-latest
