@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-from .detect import AstDetector, OpenaiDetector
+from .detect import AstDetector, CamelDetector, OpenaiDetector
 from .validate import print_validation_results, validate_config_file
 from .wrapper import MCPWrapper
 
@@ -88,6 +88,37 @@ def openai_detect_command(args) -> None:
         sys.exit(1)
 
 
+def camel_detect_command(args) -> None:
+    """Handle the camel-detect command."""
+    project_path = Path(args.project_path)
+
+    if not project_path.exists():
+        print(f"❌ Error: Project path does not exist: {project_path}")
+        sys.exit(1)
+
+    # Determine output file
+    if args.output:
+        output_file = Path(args.output)
+    else:
+        output_file = Path(_get_output_filename(project_path, "camel"))
+
+    # Create Camel-AI detector
+    try:
+        detector = CamelDetector(model_name=args.model_name)
+        print("🐪 Using Camel-AI ChatAgent for intelligent detection...")
+        _run_detection(detector, project_path, output_file)
+    except ImportError as e:
+        print(f"❌ Error: {e}")
+        print("💡 Install camel-ai with: pip install camel-ai")
+        sys.exit(1)
+    except ValueError as e:
+        print(f"❌ Error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error creating Camel-AI detector: {e}")
+        sys.exit(1)
+
+
 def ast_detect_command(args) -> None:
     """Handle the ast-detect command."""
     project_path = Path(args.project_path)
@@ -124,11 +155,21 @@ def detect_command(args) -> None:
 
     print("🎯 Auto-detecting best strategy...")
 
+    # Try Camel-AI if available (most advanced)
+    try:
+        detector = CamelDetector()
+        print("🐪 Using Camel-AI detection (best available)...")
+        _run_detection(detector, project_path, output_file)
+        return
+    except Exception as e:
+        print(f"⚠️  Camel-AI detection failed: {e}")
+        print("📉 Falling back to OpenAI detection...")
+
     # Try OpenAI if API key is available (either via CLI or env var)
     if args.openai_key or os.getenv("OPENAI_API_KEY"):
         try:
             detector = OpenaiDetector(openai_api_key=args.openai_key)
-            print("🤖 Using OpenAI detection (best available)...")
+            print("🤖 Using OpenAI detection...")
             _run_detection(detector, project_path, output_file)
             return
         except Exception as e:
@@ -316,6 +357,18 @@ def main() -> None:
         "--openai-key", help="OpenAI API key (or set OPENAI_API_KEY env var)"
     )
 
+    # Camel-AI detection command
+    camel_parser = subparsers.add_parser(
+        "camel-detect", help="Use Camel-AI ChatAgent for intelligent API detection"
+    )
+    camel_parser.add_argument("project_path", help="Path to the project directory")
+    camel_parser.add_argument(
+        "--output", "-o", help="Output file path (default: <project-name>-camel.json)"
+    )
+    camel_parser.add_argument(
+        "--model-name", default="gpt-4", help="Model name to use (default: gpt-4)"
+    )
+
     # AST detection command
     ast_parser = subparsers.add_parser(
         "ast-detect", help="Use AST analysis for code structure detection"
@@ -380,6 +433,8 @@ def main() -> None:
         detect_command(args)
     elif args.command == "openai-detect":
         openai_detect_command(args)
+    elif args.command == "camel-detect":
+        camel_detect_command(args)
     elif args.command == "ast-detect":
         ast_detect_command(args)
     elif args.command == "view":

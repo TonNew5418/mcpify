@@ -8,7 +8,7 @@ Model Context Protocol (MCP) servers.
 from .detect import (
     AstDetector,
     BaseDetector,
-    CompositeDetector,
+    CamelDetector,
     OpenaiDetector,
     create_detector,
 )
@@ -25,8 +25,8 @@ __all__ = [
     # Detectors
     "BaseDetector",
     "AstDetector",
+    "CamelDetector",
     "OpenaiDetector",
-    "CompositeDetector",
     "create_detector",
     # Version
     "__version__",

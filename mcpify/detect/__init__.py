@@ -7,7 +7,7 @@ API information to generate MCP configurations.
 
 from .ast import AstDetector
 from .base import BaseDetector
-from .composite import CompositeDetector
+from .camel import CamelDetector
 from .factory import create_detector
 from .openai import OpenaiDetector
 from .types import ProjectInfo, ToolSpec
@@ -16,8 +16,8 @@ __all__ = [
     # Core detector classes
     "BaseDetector",
     "AstDetector",
+    "CamelDetector",
     "OpenaiDetector",
-    "CompositeDetector",
     # Type definitions
     "ProjectInfo",
     "ToolSpec",
