@@ -42,7 +42,10 @@ class BaseDetector(ABC):
         tools = self._detect_tools(project_path, project_info)
 
         # Generate backend configuration
-        backend_config = self._generate_backend_config(project_path, project_info)
+        backend_config = self._generate_backend_config(
+            project_path,
+            project_info,
+        )
 
         # Construct final configuration
         config = {
@@ -56,7 +59,8 @@ class BaseDetector(ABC):
 
     def _extract_project_info(self, project_path: Path) -> ProjectInfo:
         """Extract basic information about the project."""
-        name = project_path.name
+        # Get project name from directory or pyproject.toml/setup.py
+        name = self._get_project_name(project_path)
         description = f"API for {name}"
         main_files = []
         readme_content = ""
@@ -80,11 +84,15 @@ class BaseDetector(ABC):
         python_files = list(project_path.glob("*.py"))
         if python_files:
             main_files.extend([str(f.relative_to(project_path)) for f in python_files])
-            project_type = "cli" if self._has_cli_patterns(python_files) else "library"
 
-        # Check for web frameworks
-        if self._has_web_patterns(project_path):
+        # Check for CLI patterns first (higher priority)
+        if self._has_cli_patterns(python_files):
+            project_type = "cli"
+        # Only check for web patterns if not already identified as CLI
+        elif self._has_web_patterns(project_path):
             project_type = "web"
+        else:
+            project_type = "library"
 
         # Extract dependencies
         dependencies = self._extract_dependencies(project_path)
@@ -97,6 +105,38 @@ class BaseDetector(ABC):
             project_type=project_type,
             dependencies=dependencies,
         )
+
+    def _get_project_name(self, project_path: Path) -> str:
+        """Extract project name from various sources."""
+        # Try pyproject.toml first
+        pyproject_file = project_path / "pyproject.toml"
+        if pyproject_file.exists():
+            try:
+                with open(pyproject_file, encoding="utf-8") as f:
+                    content = f.read()
+                    # Look for project name in [project] section
+                    name_match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', content)
+                    if name_match:
+                        return name_match.group(1)
+            except Exception:
+                pass
+
+        # Try setup.py next
+        setup_file = project_path / "setup.py"
+        if setup_file.exists():
+            try:
+                with open(setup_file, encoding="utf-8") as f:
+                    content = f.read()
+                    # Look for name parameter in setup()
+                    name_match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', content)
+                    if name_match:
+                        return name_match.group(1)
+            except Exception:
+                pass
+
+        # Fall back to directory name
+        name = project_path.resolve().name
+        return name if name != "." else project_path.resolve().parent.name
 
     def _extract_description_from_readme(self, readme_content: str) -> str:
         """Extract a meaningful description from README content."""

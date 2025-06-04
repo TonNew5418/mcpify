@@ -40,6 +40,9 @@ Repository = "https://github.com/muggleji/mcpify.git"
 Changelog = "https://github.com/muggleji/mcpify/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
+camel = [
+    "camel-ai>=0.2.62",
+]
 examples = [
     "fastapi>=0.104.1",
     "uvicorn[standard]>=0.24.0",

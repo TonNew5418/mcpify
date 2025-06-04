@@ -2,33 +2,36 @@
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
-from .detect import detect_project_api
+from .detect import AstDetector, OpenaiDetector
 from .validate import print_validation_results, validate_config_file
 from .wrapper import MCPWrapper
 
 
-def detect_command(args) -> None:
-    """Handle the detect command."""
-    project_path = Path(args.project_path)
+def _get_output_filename(project_path: Path, suffix: str = "") -> str:
+    """Generate output filename based on project path."""
+    # Use the resolved directory name for "." paths
+    if project_path.name == "." or not project_path.name:
+        project_name = project_path.resolve().name
+    else:
+        project_name = project_path.name
 
-    if not project_path.exists():
-        print(f"❌ Error: Project path does not exist: {project_path}")
-        sys.exit(1)
+    if suffix:
+        return f"{project_name}-{suffix}.json"
+    else:
+        return f"{project_name}.json"
 
+
+def _run_detection(detector, project_path, output_file):
+    """Common detection logic for all detector types."""
     print(f"Analyzing project: {project_path}")
 
     try:
         # Detect the API
-        config = detect_project_api(str(project_path), args.openai_key)
-
-        # Determine output file
-        if args.output:
-            output_file = Path(args.output)
-        else:
-            output_file = Path(f"{project_path.name}.json")
+        config = detector.detect_project(str(project_path))
 
         # Write configuration to file
         with open(output_file, "w", encoding="utf-8") as f:
@@ -55,6 +58,92 @@ def detect_command(args) -> None:
 
     except Exception as e:
         print(f"❌ Error during detection: {e}")
+        sys.exit(1)
+
+
+def openai_detect_command(args) -> None:
+    """Handle the openai-detect command."""
+    project_path = Path(args.project_path)
+
+    if not project_path.exists():
+        print(f"❌ Error: Project path does not exist: {project_path}")
+        sys.exit(1)
+
+    # Determine output file
+    if args.output:
+        output_file = Path(args.output)
+    else:
+        output_file = Path(_get_output_filename(project_path, "openai"))
+
+    # Create OpenAI detector (let it handle env var checking)
+    try:
+        detector = OpenaiDetector(openai_api_key=args.openai_key)
+        print("🤖 Using OpenAI GPT-4 for intelligent detection...")
+        _run_detection(detector, project_path, output_file)
+    except ValueError as e:
+        print(f"❌ Error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error creating OpenAI detector: {e}")
+        sys.exit(1)
+
+
+def ast_detect_command(args) -> None:
+    """Handle the ast-detect command."""
+    project_path = Path(args.project_path)
+
+    if not project_path.exists():
+        print(f"❌ Error: Project path does not exist: {project_path}")
+        sys.exit(1)
+
+    # Determine output file
+    if args.output:
+        output_file = Path(args.output)
+    else:
+        output_file = Path(_get_output_filename(project_path, "ast"))
+
+    # Create AST detector
+    detector = AstDetector()
+    print("🔍 Using AST analysis for code structure detection...")
+    _run_detection(detector, project_path, output_file)
+
+
+def detect_command(args) -> None:
+    """Handle the detect command with auto-selection strategy."""
+    project_path = Path(args.project_path)
+
+    if not project_path.exists():
+        print(f"❌ Error: Project path does not exist: {project_path}")
+        sys.exit(1)
+
+    # Determine output file
+    if args.output:
+        output_file = Path(args.output)
+    else:
+        output_file = Path(_get_output_filename(project_path))
+
+    print("🎯 Auto-detecting best strategy...")
+
+    # Try OpenAI if API key is available (either via CLI or env var)
+    if args.openai_key or os.getenv("OPENAI_API_KEY"):
+        try:
+            detector = OpenaiDetector(openai_api_key=args.openai_key)
+            print("🤖 Using OpenAI detection (best available)...")
+            _run_detection(detector, project_path, output_file)
+            return
+        except Exception as e:
+            print(f"⚠️  OpenAI detection failed: {e}")
+            print("📉 Falling back to AST detection...")
+
+    # Fall back to AST detector
+    try:
+        detector = AstDetector()
+        print("🔍 Using AST detection...")
+        _run_detection(detector, project_path, output_file)
+        return
+    except Exception as e:
+        print(f"❌ AST detection failed: {e}")
+        print("❌ No more detection strategies available")
         sys.exit(1)
 
 
@@ -203,16 +292,37 @@ def main() -> None:
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # Detect command
-    detect_parser = subparsers.add_parser("detect", help="Detect API from project")
+    # Main detect command (auto-selection)
+    detect_parser = subparsers.add_parser(
+        "detect", help="Auto-detect APIs using best available strategy"
+    )
     detect_parser.add_argument("project_path", help="Path to the project directory")
     detect_parser.add_argument(
-        "--output",
-        "-o",
-        help="Output file path (default: <project-name>.json)",
+        "--output", "-o", help="Output file path (default: <project-name>.json)"
     )
     detect_parser.add_argument(
-        "--openai-key", help="OpenAI API key for enhanced analysis"
+        "--openai-key", help="OpenAI API key for enhanced detection if available"
+    )
+
+    # OpenAI detection command
+    openai_parser = subparsers.add_parser(
+        "openai-detect", help="Use OpenAI GPT-4 for intelligent API detection"
+    )
+    openai_parser.add_argument("project_path", help="Path to the project directory")
+    openai_parser.add_argument(
+        "--output", "-o", help="Output file path (default: <project-name>-openai.json)"
+    )
+    openai_parser.add_argument(
+        "--openai-key", help="OpenAI API key (or set OPENAI_API_KEY env var)"
+    )
+
+    # AST detection command
+    ast_parser = subparsers.add_parser(
+        "ast-detect", help="Use AST analysis for code structure detection"
+    )
+    ast_parser.add_argument("project_path", help="Path to the project directory")
+    ast_parser.add_argument(
+        "--output", "-o", help="Output file path (default: <project-name>-ast.json)"
     )
 
     # View command
@@ -268,6 +378,10 @@ def main() -> None:
 
     if args.command == "detect":
         detect_command(args)
+    elif args.command == "openai-detect":
+        openai_detect_command(args)
+    elif args.command == "ast-detect":
+        ast_detect_command(args)
     elif args.command == "view":
         view_command(args)
     elif args.command == "serve":
