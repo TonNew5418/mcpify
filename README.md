@@ -7,10 +7,16 @@
 
 ## 🚀 Features
 
-- **Automatic API Detection**: Analyze existing projects and extract their API structure
-  - **CLI Tools**: Detect argparse-based command-line interfaces
-  - **Web APIs**: Support for Flask and FastAPI applications with route detection
+- **Intelligent API Detection**: Multiple advanced detection strategies
+  - **🤖 OpenAI Detection**: Use GPT-4 for intelligent API analysis and tool extraction
+  - **🐪 Camel-AI Detection**: Leverage Camel-AI's ChatAgent framework for comprehensive analysis
+  - **🔍 AST Detection**: Static code analysis using Abstract Syntax Trees
+  - **🎯 Auto-Selection**: Automatically choose the best available detection strategy
+- **Multiple Project Types**: Support for various project architectures
+  - **CLI Tools**: Detect argparse, click, typer-based command-line interfaces
+  - **Web APIs**: Support for Flask, Django, and FastAPI applications with route detection
   - **Interactive Commands**: Identify command-based interactive applications
+  - **Python Modules**: Extract callable functions and methods
 - **Flexible MCP Server**: Multiple ways to start and control MCP servers
 - **Multiple Backend Support**: Works with command-line tools, HTTP APIs, Python modules, and more
 - **Configuration Validation**: Built-in validation system to ensure correct configurations
@@ -34,32 +40,61 @@ cd mcpify
 pip install -e .
 ```
 
+### Optional Dependencies
+
+For enhanced detection capabilities:
+
+```bash
+# For OpenAI-powered detection
+pip install openai
+export OPENAI_API_KEY="your-api-key"
+
+# For Camel-AI powered detection
+pip install camel-ai
+```
+
 ## 🏗️ Project Architecture
 
 ```
 mcpify/
 ├── mcpify/                    # Core package
-│   ├── cli.py                 # CLI interface (mcpify command)
+│   ├── cli.py                 # CLI interface with detection commands
 │   ├── __main__.py            # Module entry point
 │   ├── wrapper.py             # MCP protocol wrapper
 │   ├── backend.py             # Backend adapters
-│   ├── detect.py              # API detection engine
+│   ├── detect/                # Detection module
+│   │   ├── __init__.py        # Module exports
+│   │   ├── base.py            # Base detector class
+│   │   ├── ast.py             # AST-based detection
+│   │   ├── openai.py          # OpenAI-powered detection
+│   │   ├── camel.py           # Camel-AI detection
+│   │   ├── factory.py         # Detector factory
+│   │   └── types.py           # Type definitions
 │   └── validate.py            # Configuration validation
 ├── examples/                  # Example projects
 ├── docs/                      # Documentation
-│   └── usage.md               # Detailed usage guide
 └── tests/                     # Test suite
 ```
 
 ## 🛠️ Quick Start
 
-### 1. Detect APIs in your project
+### 1. Intelligent API Detection
+
+MCPify offers multiple detection strategies. Use the best one for your needs:
 
 ```bash
+# Auto-detection (recommended): Automatically selects the best available strategy
 mcpify detect /path/to/your/project --output config.json
-```
 
-This analyzes your project and generates a configuration file containing the detected API structure.
+# OpenAI-powered detection: Most intelligent, requires API key
+mcpify openai-detect /path/to/your/project --output config.json
+
+# Camel-AI detection: Advanced agent-based analysis
+mcpify camel-detect /path/to/your/project --output config.json
+
+# AST detection: Fast, no API key required
+mcpify ast-detect /path/to/your/project --output config.json
+```
 
 ### 2. View and validate the configuration
 
@@ -68,11 +103,7 @@ mcpify view config.json
 mcpify validate config.json
 ```
 
-This validates the generated configuration and shows any warnings or errors.
-
 ### 3. Start the MCP server
-
-MCPify provides multiple ways to start MCP servers:
 
 ```bash
 # Method 1: Using mcpify CLI (recommended)
@@ -83,37 +114,112 @@ python -m mcpify serve config.json
 
 # HTTP mode for web integration
 mcpify serve config.json --mode streamable-http --port 8080
-
-# Example with provided configurations
-mcpify serve examples/python-server-project/server.json
-mcpify serve examples/python-server-project/server.json --mode streamable-http --port 8888
-mcpify serve examples/python-cmd-tool/cmd-tool.json
 ```
 
-## 🎯 Usage Scenarios
+## 🎯 Detection Strategies
+
+### Auto-Detection (Recommended)
+
+The auto-detect command intelligently selects the best available strategy:
+
+```bash
+mcpify detect /path/to/project
+```
+
+**Selection Priority:**
+1. **Camel-AI** (if installed) - Most comprehensive analysis
+2. **OpenAI** (if API key available) - Intelligent LLM-based detection
+3. **AST** (always available) - Reliable static analysis fallback
+
+### OpenAI Detection 🤖
+
+Uses GPT-4 for intelligent project analysis:
+
+```bash
+# With API key parameter
+mcpify openai-detect /path/to/project --openai-key YOUR_API_KEY
+
+# Using environment variable
+export OPENAI_API_KEY="your-api-key"
+mcpify openai-detect /path/to/project
+```
+
+**Advantages:**
+- Understands complex code patterns and context
+- Generates detailed descriptions and parameter information
+- Excellent at identifying non-obvious API endpoints
+- Handles multiple programming languages
+
+### Camel-AI Detection 🐪
+
+Uses Camel-AI's ChatAgent framework for comprehensive analysis:
+
+```bash
+# Install camel-ai first
+pip install camel-ai
+
+# Set OpenAI API key (required by Camel-AI)
+export OPENAI_API_KEY="your-api-key"
+
+# Run detection
+mcpify camel-detect /path/to/project --model-name gpt-4
+```
+
+**Advantages:**
+- Advanced agent-based reasoning
+- Deep project structure understanding
+- Excellent for complex multi-file projects
+- Sophisticated parameter extraction
+
+### AST Detection 🔍
+
+Fast, reliable static code analysis:
+
+```bash
+mcpify ast-detect /path/to/project
+```
+
+**Advantages:**
+- No API key required
+- Fast execution
+- Reliable for standard patterns (argparse, Flask routes)
+- Works offline
+
+## 📋 Usage Scenarios
 
 ### For Developers (API Detection & Testing)
 ```bash
-# Detect and test your APIs
-mcpify detect my-project --output my-project.json
+# Detect and test your APIs with different strategies
+mcpify detect my-project --output my-project.json           # Auto-select best
+mcpify openai-detect my-project --output my-project-ai.json # AI-powered
+mcpify ast-detect my-project --output my-project-ast.json   # Static analysis
+
+# Compare results
 mcpify view my-project.json
 mcpify serve my-project.json
 ```
 
-### For MCP Clients (Server Integration)
+### For AI-Enhanced Detection
 ```bash
-# MCP clients can start servers directly
-mcpify serve config.json                    # stdio mode
-mcpify serve config.json --mode streamable-http  # HTTP mode
+# Use OpenAI for intelligent analysis
+export OPENAI_API_KEY="your-key"
+mcpify openai-detect complex-project --output smart-config.json
+
+# Use Camel-AI for advanced agent analysis
+pip install camel-ai
+mcpify camel-detect complex-project --output agent-config.json
 ```
 
 ### For Production Deployment
 ```bash
+# Generate configuration with best available strategy
+mcpify detect production-app --output prod-config.json
+
 # Deploy as HTTP server
-mcpify serve config.json --mode streamable-http --host 0.0.0.0 --port 8080
+mcpify serve prod-config.json --mode streamable-http --host 0.0.0.0 --port 8080
 ```
 
-## 📋 Backend Types & Examples
+## 🔧 Backend Types & Examples
 
 ### FastAPI/Flask Web Applications
 ```json
@@ -198,10 +304,28 @@ mcpify serve config.json --mode streamable-http --host 0.0.0.0 --port 8080
 }
 ```
 
-## 🔧 Configuration
+## ⚙️ Detection Configuration
+
+### Available Detection Commands
+
+```bash
+# Auto-detection with strategy selection
+mcpify detect <project_path> [--output <file>] [--openai-key <key>]
+
+# Specific detection strategies
+mcpify openai-detect <project_path> [--output <file>] [--openai-key <key>]
+mcpify camel-detect <project_path> [--output <file>] [--model-name <model>]
+mcpify ast-detect <project_path> [--output <file>]
+
+# Configuration management
+mcpify view <config_file> [--verbose]
+mcpify validate <config_file> [--verbose]
+mcpify serve <config_file> [--mode <mode>] [--host <host>] [--port <port>]
+```
 
 ### Supported Backend Types
 - **`fastapi`**: FastAPI web applications
+- **`flask`**: Flask web applications
 - **`python`**: Python modules and functions
 - **`commandline`**: Command-line tools and scripts
 - **`external`**: External programs and services
@@ -214,8 +338,9 @@ mcpify serve config.json --mode streamable-http --host 0.0.0.0 --port 8080
 - `string`, `integer`, `number`, `boolean`, `array`
 - Automatic type detection from source code
 - Custom validation rules
+- Enhanced type inference with AI detection
 
-## ⚙️ Server Configuration
+## 🚀 Server Configuration
 
 ### Command Line Options
 
@@ -263,26 +388,16 @@ mcpify serve config.json --mode streamable-http --port 8080
 mcpify serve config.json --mode streamable-http --host 0.0.0.0 --port 8080
 ```
 
-### Environment Integration
-
-#### For MCP Clients
-```bash
-# Claude Desktop or other MCP clients can invoke:
-mcpify serve your-config.json
-```
-
-#### For Web Applications
-```bash
-# Start HTTP server for web integration
-mcpify serve your-config.json --mode streamable-http --port 8080
-# Then connect from web clients to http://localhost:8080
-```
-
 ## 📁 Examples
 
 Explore the `examples/` directory for ready-to-use configurations:
 
 ```bash
+# Try different detection strategies on examples
+mcpify detect examples/python-server-project --output server-auto.json
+mcpify openai-detect examples/python-cmd-tool --output cmd-openai.json
+mcpify ast-detect examples/python-server-project --output server-ast.json
+
 # View example configurations
 mcpify view examples/python-server-project/server.json
 mcpify view examples/python-cmd-tool/cmd-tool.json
@@ -315,6 +430,10 @@ python -m pytest tests/test_detect.py -v
 git clone https://github.com/your-username/mcpify.git
 cd mcpify
 pip install -e ".[dev]"
+
+# Install optional dependencies for full functionality
+pip install openai camel-ai
+
 python -m pytest tests/ -v
 ```
 
@@ -322,10 +441,18 @@ python -m pytest tests/ -v
 
 #### MCPify CLI Commands
 ```bash
-mcpify detect <project_path> [--output <file>]    # Detect APIs
-mcpify view <config_file>                         # View configuration
-mcpify validate <config_file>                     # Validate configuration
-mcpify serve <config_file> [--mode <mode>]        # Start server
+# Detection commands
+mcpify detect <project_path> [--output <file>] [--openai-key <key>]
+mcpify openai-detect <project_path> [--output <file>] [--openai-key <key>]
+mcpify camel-detect <project_path> [--output <file>] [--model-name <model>]
+mcpify ast-detect <project_path> [--output <file>]
+
+# Configuration commands
+mcpify view <config_file> [--verbose]
+mcpify validate <config_file> [--verbose]
+
+# Server commands
+mcpify serve <config_file> [--mode <mode>] [--host <host>] [--port <port>]
 ```
 
 ## 🚀 Deployment Options
@@ -349,6 +476,8 @@ FROM python:3.10-slim
 COPY . /app
 WORKDIR /app
 RUN pip install .
+# Optional: Install AI detection dependencies
+# RUN pip install openai camel-ai
 CMD ["mcpify", "serve", "config.json", "--mode", "streamable-http", "--host", "0.0.0.0", "--port", "8080"]
 ```
 
@@ -388,6 +517,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Model Context Protocol](https://modelcontextprotocol.io/) - The protocol specification
 - [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) - Official Python implementation
+- [OpenAI API](https://openai.com/api/) - For AI-powered detection
+- [Camel-AI](https://github.com/camel-ai/camel) - Multi-agent framework for advanced detection
 
 ## 📞 Support
 
