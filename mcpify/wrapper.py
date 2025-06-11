@@ -81,15 +81,15 @@ class MCPWrapper:
                         return f"Error executing tool: {str(e)}"
             else:
                 # Use simple command line execution (backward compatibility)
-                # This requires a command to be specified in the config
-                command = self.config.get("command")
-                if not command:
+                args_template = tool_config.get("args", [])
+
+                # Check if we have args specified in the tool config
+                if not args_template:
                     return (
                         "Error: No backend adapter configured and no command "
                         "specified"
                     )
 
-                args_template = tool_config.get("args", [])
                 cmd_args = []
                 for arg in args_template:
                     if arg.startswith("{") and arg.endswith("}"):
@@ -100,7 +100,7 @@ class MCPWrapper:
                         cmd_args.append(arg)
 
                 result = subprocess.run(
-                    [command] + cmd_args, capture_output=True, text=True, cwd="."
+                    cmd_args, capture_output=True, text=True, cwd="."
                 )
 
                 if result.returncode != 0:
