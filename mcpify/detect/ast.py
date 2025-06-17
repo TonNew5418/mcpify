@@ -17,9 +17,12 @@ from .types import ProjectInfo, ToolSpec
 class AstDetector(BaseDetector):
     """AST-based project detector implementation."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the AST detector."""
-        super().__init__(**kwargs)
+        pass
+        # Since BaseDetector does not require any specific initialization,
+        # we can leave this empty.
+        # super().__init__(**kwargs)
 
     def _detect_tools(
         self, project_path: Path, project_info: ProjectInfo
@@ -69,11 +72,11 @@ class AstDetector(BaseDetector):
         tools = []
 
         class ArgparseVisitor(ast.NodeVisitor):
-            def __init__(self):
-                self.arguments = []
+            def __init__(self) -> None:
+                self.arguments: list[dict] = []
                 self.in_parser = False
 
-            def visit_Call(self, node):
+            def visit_Call(self, node: ast.Call) -> None:
                 # Look for add_argument calls
                 if (
                     isinstance(node.func, ast.Attribute)
@@ -391,7 +394,7 @@ class AstDetector(BaseDetector):
 
     def _extract_command_patterns(self, content: str) -> dict[str, Any]:
         """Extract command patterns from if/elif chains."""
-        commands = {}
+        commands: dict[str, Any] = {}
 
         # Pattern for simple commands like: if line.lower() == 'hello':
         simple_pattern = r"(?:if|elif)\s+.*?\.lower\(\)\s*==\s*['\"](\w+)['\"]"
