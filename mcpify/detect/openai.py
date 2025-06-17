@@ -7,6 +7,7 @@ for intelligent project analysis and tool detection.
 
 import json
 import os
+import types
 from pathlib import Path
 from typing import Any
 
@@ -19,10 +20,10 @@ from .types import ProjectInfo, ToolSpec
 class OpenaiDetector(BaseDetector):
     """OpenAI-based project detector that uses LLM for intelligent analysis."""
 
-    def __init__(self, openai_api_key: str | None = None, **kwargs):
+    def __init__(self, openai_api_key: str | None = None, **kwargs: Any):
         """Initialize the detector with OpenAI API key."""
-        super().__init__(**kwargs)
-        self.openai_client = None
+        # super().__init__(**kwargs)
+        self.openai_client: types.ModuleType
         if openai_api_key:
             openai.api_key = openai_api_key
             self.openai_client = openai
