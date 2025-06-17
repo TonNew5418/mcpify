@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-from .detect import AstDetector, CamelDetector, OpenaiDetector
+from .detect import AstDetector, BaseDetector, CamelDetector, OpenaiDetector
 from .validate import print_validation_results, validate_config_file
 from .wrapper import MCPWrapper
 
@@ -25,7 +25,9 @@ def _get_output_filename(project_path: Path, suffix: str = "") -> str:
         return f"{project_name}.json"
 
 
-def _run_detection(detector, project_path, output_file):
+def _run_detection(
+    detector: BaseDetector, project_path: Path, output_file: Path
+) -> None:
     """Common detection logic for all detector types."""
     print(f"Analyzing project: {project_path}")
 
@@ -61,7 +63,7 @@ def _run_detection(detector, project_path, output_file):
         sys.exit(1)
 
 
-def openai_detect_command(args) -> None:
+def openai_detect_command(args: argparse.Namespace) -> None:
     """Handle the openai-detect command."""
     project_path = Path(args.project_path)
 
@@ -88,7 +90,7 @@ def openai_detect_command(args) -> None:
         sys.exit(1)
 
 
-def camel_detect_command(args) -> None:
+def camel_detect_command(args: argparse.Namespace) -> None:
     """Handle the camel-detect command."""
     project_path = Path(args.project_path)
 
@@ -119,7 +121,7 @@ def camel_detect_command(args) -> None:
         sys.exit(1)
 
 
-def ast_detect_command(args) -> None:
+def ast_detect_command(args: argparse.Namespace) -> None:
     """Handle the ast-detect command."""
     project_path = Path(args.project_path)
 
@@ -139,7 +141,7 @@ def ast_detect_command(args) -> None:
     _run_detection(detector, project_path, output_file)
 
 
-def detect_command(args) -> None:
+def detect_command(args: argparse.Namespace) -> None:
     """Handle the detect command with auto-selection strategy."""
     project_path = Path(args.project_path)
 
@@ -155,6 +157,7 @@ def detect_command(args) -> None:
 
     print("🎯 Auto-detecting best strategy...")
 
+    detector: BaseDetector
     # Try Camel-AI if available (most advanced)
     try:
         detector = CamelDetector()
@@ -188,7 +191,7 @@ def detect_command(args) -> None:
         sys.exit(1)
 
 
-def view_command(args) -> None:
+def view_command(args: argparse.Namespace) -> None:
     """Visually display the API specification."""
     config_file = Path(args.config_file)
 
@@ -241,7 +244,7 @@ def view_command(args) -> None:
         sys.exit(1)
 
 
-def serve_command(args) -> None:
+def serve_command(args: argparse.Namespace) -> None:
     """Serve MCP server directly."""
     config_file = Path(args.config_file)
 
@@ -296,7 +299,7 @@ def serve_command(args) -> None:
         sys.exit(1)
 
 
-def validate_command(args) -> None:
+def validate_command(args: argparse.Namespace) -> None:
     """Handle the validate command."""
     config_file = Path(args.config_file)
 
@@ -326,8 +329,7 @@ def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         description=(
-            "MCPify - Automatically detect APIs and generate "
-            "MCP server configurations"
+            "MCPify - Automatically detect APIs and generate MCP server configurations"
         )
     )
 
