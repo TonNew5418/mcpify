@@ -2,7 +2,7 @@
 import time
 
 
-def main():
+def main() -> None:
     print("Server started. Waiting for input...", flush=True)
 
     while True:
