@@ -13,7 +13,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from .backend import create_adapter
+from .backend import BackendAdapter, create_adapter
 
 
 class MCPWrapper:
@@ -28,6 +28,7 @@ class MCPWrapper:
         self.mcp = FastMCP(server_name)
 
         # Check if backend configuration exists
+        self.adapter: BackendAdapter | None = None
         if "backend" in self.config:
             self.adapter = create_adapter(self.config["backend"])
         else:
@@ -54,18 +55,19 @@ class MCPWrapper:
         tool_name = tool_config["name"]
         parameters = tool_config.get("parameters", [])
 
-        def tool_executor(**kwargs):
+        def tool_executor(**kwargs: Any) -> Any:
             """Generic function to execute tools"""
             if self.adapter:
                 # Use adapter to execute tool
-                def run_async_in_thread():
+                def run_async_in_thread() -> Any:
                     """Run async code in new thread"""
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     try:
-                        return loop.run_until_complete(
-                            self.adapter.execute_tool(tool_config, kwargs)
-                        )
+                        if self.adapter is not None:
+                            return loop.run_until_complete(
+                                self.adapter.execute_tool(tool_config, kwargs)
+                            )
                     finally:
                         loop.close()
 
@@ -86,8 +88,7 @@ class MCPWrapper:
                 # Check if we have args specified in the tool config
                 if not args_template:
                     return (
-                        "Error: No backend adapter configured and no command "
-                        "specified"
+                        "Error: No backend adapter configured and no command specified"
                     )
 
                 cmd_args = []
@@ -136,15 +137,24 @@ class MCPWrapper:
 
             # Create new function signature
             new_signature = inspect.Signature(sig_params)
-            tool_executor.__signature__ = new_signature
+
+            # Dynamically assign the generated signature.
+            # Normally we would assign via tool_executor.__signature__ = new_signature.
+            # However, since __signature__ is not a known attribute of FunctionType,
+            # directly assigning it would cause mypy to report an "attribute not defined" error.
+            #
+            # Using tool_executor.__dict__["__signature__"] = new_signature
+            # bypasses the static type checker, as mypy does not analyze __dict__ content.
+            # This allows us to safely inject the runtime signature without triggering type errors.
+            tool_executor.__dict__["__signature__"] = new_signature
         else:
             # Function with no parameters
             tool_executor.__annotations__ = {"return": str}
-            tool_executor.__signature__ = inspect.Signature([])
+            tool_executor.__dict__["__signature__"] = inspect.Signature([])
 
         return tool_executor
 
-    def _register_tools(self):
+    def _register_tools(self) -> None:
         """Register all tools to MCP server"""
         for tool in self.config.get("tools", []):
             tool_name = tool["name"]
@@ -156,21 +166,21 @@ class MCPWrapper:
             # Register to MCP
             self.mcp.tool(name=tool_name, description=tool_description)(tool_func)
 
-    async def start_backend(self):
+    async def start_backend(self) -> None:
         """Start backend service"""
         if self.adapter:
             await self.adapter.start()
 
-    async def stop_backend(self):
+    async def stop_backend(self) -> None:
         """Stop backend service"""
         if self.adapter:
             await self.adapter.stop()
 
-    def server(self):
+    def server(self) -> FastMCP:
         """Run MCP server"""
         return self.mcp
 
-    def run(self):
+    def run(self) -> None:
         """Start MCP server"""
         # If adapter exists, start backend service first
         if self.adapter:
