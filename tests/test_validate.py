@@ -18,7 +18,7 @@ from mcpify.validate import (
 class TestValidationError:
     """Test ValidationError dataclass."""
 
-    def test_validation_error_creation(self):
+    def test_validation_error_creation(self) -> None:
         """Test creating a ValidationError."""
         error = ValidationError("field", "message", "error", "path")
         assert error.field == "field"
@@ -26,7 +26,7 @@ class TestValidationError:
         assert error.severity == "error"
         assert error.path == "path"
 
-    def test_validation_error_defaults(self):
+    def test_validation_error_defaults(self) -> None:
         """Test ValidationError with default values."""
         error = ValidationError("field", "message")
         assert error.field == "field"
@@ -38,14 +38,14 @@ class TestValidationError:
 class TestValidationResult:
     """Test ValidationResult dataclass."""
 
-    def test_validation_result_creation(self):
+    def test_validation_result_creation(self) -> None:
         """Test creating a ValidationResult."""
         result = ValidationResult(True, [], [])
         assert result.is_valid is True
         assert result.errors == []
         assert result.warnings == []
 
-    def test_add_error(self):
+    def test_add_error(self) -> None:
         """Test adding an error to ValidationResult."""
         result = ValidationResult(True, [], [])
         result.add_error("field", "message", "path")
@@ -56,7 +56,7 @@ class TestValidationResult:
         assert result.errors[0].message == "message"
         assert result.errors[0].path == "path"
 
-    def test_add_warning(self):
+    def test_add_warning(self) -> None:
         """Test adding a warning to ValidationResult."""
         result = ValidationResult(True, [], [])
         result.add_warning("field", "message", "path")
@@ -67,12 +67,12 @@ class TestValidationResult:
         assert result.warnings[0].message == "message"
         assert result.warnings[0].path == "path"
 
-    def test_get_summary_valid(self):
+    def test_get_summary_valid(self) -> None:
         """Test get_summary for valid config."""
         result = ValidationResult(True, [], [])
         assert result.get_summary() == "✅ Configuration is valid"
 
-    def test_get_summary_errors_and_warnings(self):
+    def test_get_summary_errors_and_warnings(self) -> None:
         """Test get_summary with errors and warnings."""
         result = ValidationResult(False, [], [])
         result.add_error("field1", "error message")
@@ -86,11 +86,11 @@ class TestValidationResult:
 class TestMCPConfigValidator:
     """Test MCPConfigValidator class."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.validator = MCPConfigValidator()
 
-    def test_valid_commandline_config(self):
+    def test_valid_commandline_config(self) -> None:
         """Test validation of a valid commandline configuration."""
         config = {
             "name": "test-api",
@@ -126,7 +126,7 @@ class TestMCPConfigValidator:
         assert len(result.errors) == 0
         assert len(result.warnings) == 0
 
-    def test_valid_http_config(self):
+    def test_valid_http_config(self) -> None:
         """Test validation of a valid HTTP configuration."""
         config = {
             "name": "http-api",
@@ -150,7 +150,7 @@ class TestMCPConfigValidator:
         assert len(result.errors) == 0
         assert len(result.warnings) == 0
 
-    def test_valid_websocket_config(self):
+    def test_valid_websocket_config(self) -> None:
         """Test validation of a valid WebSocket configuration."""
         config = {
             "name": "websocket-api",
@@ -180,7 +180,7 @@ class TestMCPConfigValidator:
         assert len(result.errors) == 0
         assert len(result.warnings) == 0
 
-    def test_missing_required_fields(self):
+    def test_missing_required_fields(self) -> None:
         """Test validation with missing required fields."""
         config = {
             "name": "test-api"
@@ -196,7 +196,7 @@ class TestMCPConfigValidator:
         assert "backend" in error_fields
         assert "tools" in error_fields
 
-    def test_invalid_name(self):
+    def test_invalid_name(self) -> None:
         """Test validation with invalid name."""
         config = {
             "name": "",  # Empty name
@@ -209,7 +209,7 @@ class TestMCPConfigValidator:
         assert result.is_valid is False
         assert any(error.field == "name" for error in result.errors)
 
-    def test_invalid_backend_type(self):
+    def test_invalid_backend_type(self) -> None:
         """Test validation with invalid backend type."""
         config = {
             "name": "test-api",
@@ -222,7 +222,7 @@ class TestMCPConfigValidator:
         assert result.is_valid is False
         assert any(error.field == "backend.type" for error in result.errors)
 
-    def test_missing_backend_config(self):
+    def test_missing_backend_config(self) -> None:
         """Test validation with missing backend config."""
         config = {
             "name": "test-api",
@@ -238,7 +238,7 @@ class TestMCPConfigValidator:
         assert result.is_valid is False
         assert any(error.field == "backend.config" for error in result.errors)
 
-    def test_invalid_commandline_backend(self):
+    def test_invalid_commandline_backend(self) -> None:
         """Test validation with invalid commandline backend."""
         config = {
             "name": "test-api",
@@ -263,7 +263,7 @@ class TestMCPConfigValidator:
         assert any("backend.config.args" in field for field in error_fields)
         assert "backend.config.cwd" in error_fields
 
-    def test_invalid_http_backend(self):
+    def test_invalid_http_backend(self) -> None:
         """Test validation with invalid HTTP backend."""
         config = {
             "name": "test-api",
@@ -285,7 +285,7 @@ class TestMCPConfigValidator:
         assert "backend.config.base_url" in error_fields
         assert "backend.config.timeout" in error_fields
 
-    def test_invalid_websocket_backend(self):
+    def test_invalid_websocket_backend(self) -> None:
         """Test validation with invalid WebSocket backend."""
         config = {
             "name": "test-api",
@@ -303,7 +303,7 @@ class TestMCPConfigValidator:
         assert result.is_valid is False
         assert any(error.field == "backend.config.url" for error in result.errors)
 
-    def test_duplicate_tool_names(self):
+    def test_duplicate_tool_names(self) -> None:
         """Test validation with duplicate tool names."""
         config = {
             "name": "test-api",
@@ -323,7 +323,7 @@ class TestMCPConfigValidator:
         assert result.is_valid is False
         assert any("Duplicate tool name" in error.message for error in result.errors)
 
-    def test_invalid_tool_structure(self):
+    def test_invalid_tool_structure(self) -> None:
         """Test validation with invalid tool structure."""
         config = {
             "name": "test-api",
@@ -350,7 +350,7 @@ class TestMCPConfigValidator:
         assert len(result.errors) > 0
         assert len(result.warnings) > 0
 
-    def test_parameter_consistency(self):
+    def test_parameter_consistency(self) -> None:
         """Test validation of parameter consistency."""
         config = {
             "name": "test-api",
@@ -381,7 +381,7 @@ class TestMCPConfigValidator:
         # Should have warning for unused parameter
         assert any("unused_param" in warning.message for warning in result.warnings)
 
-    def test_warnings_only(self):
+    def test_warnings_only(self) -> None:
         """Test configuration that's valid but has warnings."""
         config = {
             "name": "test-api",
@@ -404,7 +404,7 @@ class TestMCPConfigValidator:
 class TestValidationFunctions:
     """Test module-level validation functions."""
 
-    def test_validate_config_dict(self):
+    def test_validate_config_dict(self) -> None:
         """Test validate_config_dict function."""
         config = {
             "name": "test-api",
@@ -417,7 +417,7 @@ class TestValidationFunctions:
         assert isinstance(result, ValidationResult)
         assert result.is_valid is True
 
-    def test_validate_config_file_valid(self):
+    def test_validate_config_file_valid(self) -> None:
         """Test validate_config_file with valid file."""
         config = {
             "name": "test-api",
@@ -437,13 +437,13 @@ class TestValidationFunctions:
         finally:
             Path(temp_path).unlink()
 
-    def test_validate_config_file_not_found(self):
+    def test_validate_config_file_not_found(self) -> None:
         """Test validate_config_file with non-existent file."""
         result = validate_config_file("non-existent-file.json")
         assert result.is_valid is False
         assert any("not found" in error.message for error in result.errors)
 
-    def test_validate_config_file_invalid_json(self):
+    def test_validate_config_file_invalid_json(self) -> None:
         """Test validate_config_file with invalid JSON."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("{ invalid json }")
@@ -460,17 +460,17 @@ class TestValidationFunctions:
 class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.validator = MCPConfigValidator()
 
-    def test_non_dict_config(self):
+    def test_non_dict_config(self) -> None:
         """Test validation with non-dictionary config."""
-        result = self.validator.validate_config("not a dict")
+        result = self.validator.validate_config("not a dict")  # type: ignore
         assert result.is_valid is False
         assert any("must be a JSON object" in error.message for error in result.errors)
 
-    def test_empty_tools_array(self):
+    def test_empty_tools_array(self) -> None:
         """Test validation with empty tools array."""
         config = {
             "name": "test-api",
@@ -483,7 +483,7 @@ class TestEdgeCases:
         assert result.is_valid is True
         assert any("No tools defined" in warning.message for warning in result.warnings)
 
-    def test_unknown_fields(self):
+    def test_unknown_fields(self) -> None:
         """Test validation with unknown fields."""
         config = {
             "name": "test-api",
@@ -497,7 +497,7 @@ class TestEdgeCases:
         assert result.is_valid is True
         assert any("Unknown field" in warning.message for warning in result.warnings)
 
-    def test_very_long_name(self):
+    def test_very_long_name(self) -> None:
         """Test validation with very long name."""
         config = {
             "name": "a" * 150,  # Very long name
@@ -510,7 +510,7 @@ class TestEdgeCases:
         assert result.is_valid is True
         assert any("quite long" in warning.message for warning in result.warnings)
 
-    def test_very_long_description(self):
+    def test_very_long_description(self) -> None:
         """Test validation with very long description."""
         config = {
             "name": "test-api",
