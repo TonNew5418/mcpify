@@ -28,9 +28,9 @@ except ImportError:
 class CamelDetector(BaseDetector):
     """Camel-AI based project detector using ChatAgent framework."""
 
-    def __init__(self, model_name: str = "gpt-4o-mini", **kwargs):
+    def __init__(self, model_name: str = "gpt-4o-mini", **kwargs: Any) -> None:
         """Initialize the detector with Camel-AI ChatAgent."""
-        super().__init__(**kwargs)
+        # super().__init__(**kwargs)
 
         if not CAMEL_AVAILABLE:
             raise ImportError(
@@ -46,10 +46,10 @@ class CamelDetector(BaseDetector):
             )
 
         self.model_name = model_name
-        self.agent = None
+        self.agent: ChatAgent | None = None
         self._initialize_agent()
 
-    def _initialize_agent(self):
+    def _initialize_agent(self) -> None:
         """Initialize the ChatAgent with correct API usage."""
         # Create model using ModelFactory
         model = ModelFactory.create(
@@ -146,7 +146,7 @@ Always provide detailed, accurate analysis in JSON format."""
         """Get a simplified directory structure."""
         structure_lines = []
 
-        def walk_dir(path: Path, depth: int = 0, prefix: str = ""):
+        def walk_dir(path: Path, depth: int = 0, prefix: str = "") -> None:
             if depth > max_depth:
                 return
 
@@ -218,6 +218,8 @@ Focus on practical, usable tools that provide real value."""
                 role_name="User", content=user_prompt
             )
 
+            if self.agent is None:
+                raise ValueError("Camel-AI agent not initialized")
             response = self.agent.step(user_message)
             content = response.msg.content.strip()
 
@@ -297,7 +299,8 @@ Focus on practical, usable tools that provide real value."""
             user_message = BaseMessage.make_user_message(
                 role_name="User", content=prompt
             )
-
+            if self.agent is None:
+                raise ValueError("Camel-AI agent not initialized")
             response = self.agent.step(user_message)
             enhanced_data = json.loads(response.msg.content)
 
