@@ -11,7 +11,7 @@ import requests
 BASE_URL = "http://localhost:8000"
 
 
-def test_api():
+def test_api() -> None:
     """Test the FastAPI todo server endpoints."""
     print("🧪 Testing FastAPI Todo Server")
     print("=" * 50)

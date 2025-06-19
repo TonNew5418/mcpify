@@ -5,13 +5,15 @@ This module provides factory functions to create detector instances
 with proper configuration and fallback strategies.
 """
 
+from typing import Any
+
 from .ast import AstDetector
 from .base import BaseDetector
 from .camel import CamelDetector
 from .openai import OpenaiDetector
 
 
-def create_detector(detector_type: str = "auto", **kwargs) -> BaseDetector:
+def create_detector(detector_type: str = "auto", **kwargs: Any) -> BaseDetector:
     """
     Create a detector instance based on the specified type.
 
@@ -41,7 +43,7 @@ def create_detector(detector_type: str = "auto", **kwargs) -> BaseDetector:
     return detectors[detector_type]()
 
 
-def _create_auto_detector(**kwargs) -> BaseDetector:
+def _create_auto_detector(**kwargs: Any) -> BaseDetector:
     """
     Automatically select the best available detector.
 

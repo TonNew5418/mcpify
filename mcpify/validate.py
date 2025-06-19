@@ -31,12 +31,12 @@ class ValidationResult:
     errors: list[ValidationError]
     warnings: list[ValidationError]
 
-    def add_error(self, field: str, message: str, path: str = ""):
+    def add_error(self, field: str, message: str, path: str = "") -> None:
         """Add an error to the validation result."""
         self.errors.append(ValidationError(field, message, "error", path))
         self.is_valid = False
 
-    def add_warning(self, field: str, message: str, path: str = ""):
+    def add_warning(self, field: str, message: str, path: str = "") -> None:
         """Add a warning to the validation result."""
         self.warnings.append(ValidationError(field, message, "warning", path))
 
@@ -66,7 +66,7 @@ class MCPConfigValidator:
     # Valid parameter types for tools
     VALID_PARAM_TYPES = ["string", "integer", "number", "boolean", "array", "object"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the validator."""
         pass
 
@@ -140,7 +140,7 @@ class MCPConfigValidator:
     ) -> None:
         """Validate top-level structure and required fields."""
         if not isinstance(config, dict):
-            result.add_error("root", "Configuration must be a JSON object")
+            result.add_error("root", "Configuration must be a JSON object")  # type: ignore[unreachable]
             return
 
         # Check required fields

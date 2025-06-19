@@ -3,7 +3,7 @@ import argparse
 import time
 
 
-def main():
+def main() -> None:
     # 设置命令行参数解析器
     parser = argparse.ArgumentParser(
         description="A simple command-line tool that processes commands."

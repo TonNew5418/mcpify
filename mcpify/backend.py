@@ -7,6 +7,7 @@ import asyncio
 import subprocess
 import time
 from abc import ABC, abstractmethod
+from typing import Any
 
 import aiohttp
 
@@ -15,17 +16,17 @@ class BackendAdapter(ABC):
     """Backend program adapter base class"""
 
     @abstractmethod
-    async def execute_tool(self, tool_config, parameters):
+    async def execute_tool(self, tool_config: dict[str, Any], parameters: Any) -> str:
         """Execute tool call"""
         pass
 
     @abstractmethod
-    async def start(self):
+    async def start(self) -> None:
         """Start backend program"""
         pass
 
     @abstractmethod
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop backend program"""
         pass
 
@@ -33,21 +34,21 @@ class BackendAdapter(ABC):
 class CommandLineAdapter(BackendAdapter):
     """Command line program adapter"""
 
-    def __init__(self, config):
+    def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
         self.command = config["command"]
         self.base_args = config.get("args", [])
         self.cwd = config.get("cwd", ".")
 
-    async def start(self):
+    async def start(self) -> None:
         """Command line programs don't need startup"""
         pass
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Command line programs don't need shutdown"""
         pass
 
-    async def execute_tool(self, tool_config, parameters):
+    async def execute_tool(self, tool_config: dict[str, Any], parameters: Any) -> str:
         """Execute command line tool"""
         cmd_args = []
         args_template = tool_config.get("args", [])
@@ -74,18 +75,18 @@ class CommandLineAdapter(BackendAdapter):
 class ServerAdapter(BackendAdapter):
     """Server program adapter"""
 
-    def __init__(self, config):
+    def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
         self.command = config["command"]
         self.args = config.get("args", [])
         self.cwd = config.get("cwd", ".")
         self.startup_timeout = config.get("startup_timeout", 5)
         self.ready_signal = config.get("ready_signal", "")
-        self.process = None
+        self.process: subprocess.Popen | None = None
         self.ready = False
         self.lock = asyncio.Lock()
 
-    async def start(self):
+    async def start(self) -> None:
         """Start server program"""
         if self.process is not None:
             return
@@ -110,21 +111,30 @@ class ServerAdapter(BackendAdapter):
 
         print("✅ Server startup complete")
 
-    async def _wait_for_ready(self):
+    async def _wait_for_ready(self) -> None:
         """Wait for server ready signal"""
+        if self.process is None:
+            raise RuntimeError("Server process is not started")
+
         start_time = time.time()
 
         while time.time() - start_time < self.startup_timeout:
             if self.process.poll() is not None:
-                stderr = self.process.stderr.read()
+                if self.process.stderr is not None:
+                    stderr = self.process.stderr.read()
+                else:
+                    raise RuntimeError("Process stderr is not available")
                 raise RuntimeError(f"Server startup failed: {stderr}")
 
             # Non-blocking read output
             try:
-                line = self.process.stdout.readline()
-                if line and self.ready_signal in line:
-                    self.ready = True
-                    return
+                if self.process.stdout is not None:
+                    line = self.process.stdout.readline()
+                    if line and self.ready_signal in line:
+                        self.ready = True
+                        return
+                else:
+                    raise RuntimeError("Process stdout is not available")
             except Exception:
                 pass
 
@@ -132,7 +142,7 @@ class ServerAdapter(BackendAdapter):
 
         raise TimeoutError(f"Server startup timeout ({self.startup_timeout}s)")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop server program"""
         if self.process is None:
             return
@@ -140,16 +150,21 @@ class ServerAdapter(BackendAdapter):
         print("🛑 Stopping server...")
 
         try:
-            # Send quit command
-            self.process.stdin.write("quit\n")
-            self.process.stdin.flush()
+            if self.process.stdin is not None:
+                # Send quit command
+                self.process.stdin.write("quit\n")
+                self.process.stdin.flush()
 
-            # Wait for process to end
-            try:
-                self.process.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                self.process.terminate()
-                self.process.wait(timeout=3)
+                # Wait for process to end
+                try:
+                    self.process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    self.process.terminate()
+                    self.process.wait(timeout=3)
+            else:
+                raise RuntimeError(
+                    "Process stdin is not available for sending quit command"
+                )
         except Exception:
             if self.process.poll() is None:
                 self.process.kill()
@@ -158,7 +173,7 @@ class ServerAdapter(BackendAdapter):
         self.ready = False
         print("✅ Server stopped")
 
-    async def execute_tool(self, tool_config, parameters):
+    async def execute_tool(self, tool_config: dict[str, Any], parameters: Any) -> str:
         """Execute server tool"""
         if not self.ready or self.process is None:
             await self.start()
@@ -172,13 +187,26 @@ class ServerAdapter(BackendAdapter):
                 command = command.replace(f"{{{param_name}}}", str(value))
 
             try:
-                # Send command
-                self.process.stdin.write(f"{command}\n")
-                self.process.stdin.flush()
+                if self.process is None:
+                    raise RuntimeError("Server process is not running")
 
-                # Read response
-                response = self.process.stdout.readline().strip()
-                return response
+                if self.process.stdin is not None:
+                    # Send command
+                    self.process.stdin.write(f"{command}\n")
+                    self.process.stdin.flush()
+                else:
+                    raise RuntimeError(
+                        "Process stdin is not available for sending commands"
+                    )
+
+                if self.process.stdout is not None:
+                    # Read response
+                    response: str = self.process.stdout.readline().strip()
+                    return response
+                else:
+                    raise RuntimeError(
+                        "Process stdout is not available for reading response"
+                    )
 
             except Exception as e:
                 return f"Error communicating with server: {str(e)}"
@@ -187,28 +215,28 @@ class ServerAdapter(BackendAdapter):
 class HttpAdapter(BackendAdapter):
     """HTTP API adapter"""
 
-    def __init__(self, config):
+    def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
         self.base_url = config["base_url"]
         self.timeout = config.get("timeout", 10)
         self.headers = config.get("headers", {})
-        self.session = None
+        self.session: aiohttp.ClientSession | None = None
 
-    async def start(self):
+    async def start(self) -> None:
         """Start HTTP session"""
         if self.session is None:
             timeout = aiohttp.ClientTimeout(total=self.timeout)
             self.session = aiohttp.ClientSession(timeout=timeout, headers=self.headers)
             print(f"🌐 HTTP session started: {self.base_url}")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Close HTTP session"""
         if self.session:
             await self.session.close()
             self.session = None
             print("🌐 HTTP session closed")
 
-    async def execute_tool(self, tool_config, parameters):
+    async def execute_tool(self, tool_config: dict[str, Any], parameters: Any) -> str:
         """Execute HTTP API call"""
         if self.session is None:
             await self.start()
@@ -219,6 +247,10 @@ class HttpAdapter(BackendAdapter):
         url = f"{self.base_url}{endpoint}"
 
         try:
+            result: str
+            if self.session is None:
+                raise RuntimeError("HTTP session is not started")
+
             if method == "GET":
                 # GET request uses parameters as query parameters
                 async with self.session.get(url, params=parameters) as response:
@@ -256,7 +288,7 @@ class HttpAdapter(BackendAdapter):
             return f"HTTP request failed: {str(e)}"
 
 
-def create_adapter(backend_config):
+def create_adapter(backend_config: dict[str, Any]) -> BackendAdapter:
     """Create adapter based on configuration"""
     backend_type = backend_config["type"]
     config = backend_config["config"]

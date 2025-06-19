@@ -17,7 +17,7 @@ class BaseDetector(ABC):
     """Base class for project detection and analysis."""
 
     @abstractmethod
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the detector with configuration options."""
         pass
 
@@ -31,19 +31,19 @@ class BaseDetector(ABC):
         Returns:
             Dictionary containing the MCP configuration
         """
-        project_path = Path(project_path)
-        if not project_path.exists():
-            raise ValueError(f"Project path does not exist: {project_path}")
+        proj_path = Path(project_path)
+        if not proj_path.exists():
+            raise ValueError(f"Project path does not exist: {proj_path}")
 
         # Extract project information
-        project_info = self._extract_project_info(project_path)
+        project_info = self._extract_project_info(proj_path)
 
         # Detect tools/APIs (abstract method)
-        tools = self._detect_tools(project_path, project_info)
+        tools = self._detect_tools(proj_path, project_info)
 
         # Generate backend configuration
         backend_config = self._generate_backend_config(
-            project_path,
+            proj_path,
             project_info,
         )
 
