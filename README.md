@@ -24,6 +24,188 @@
 - **Zero Code Changes**: Transform existing projects without modifying their source code
 - **Professional Architecture**: Clean separation between detection, configuration, and server execution
 
+## 🎨 Interactive UI Features
+
+MCPify now includes a powerful **Streamlit-based web interface** that makes repository analysis and MCP server configuration generation intuitive and interactive!
+
+### 🚀 Launch the UI
+
+```bash
+# Install UI dependencies
+pip install 'mcpify[ui]'
+
+# Start the interactive web interface
+python -m mcpify.ui
+
+# Or use the convenience function
+python -c "from mcpify.ui import start_ui; start_ui()"
+```
+
+Then navigate to **http://localhost:8501** in your browser.
+
+### ✨ Key UI Features
+
+#### 🔍 **Repository Analyzer**
+- **GitIngest-style Interface**: Clean, intuitive repository input with drag-and-drop support
+- **Smart Examples**: Pre-configured example repositories to try instantly
+- **Advanced Options**: Configurable exclude patterns, file size limits, and detection strategies
+- **Real-time Progress**: Visual progress indicators for each analysis phase
+- **Multiple Input Types**: Support for GitHub URLs, local directories, and Git repositories
+
+#### 🤖 **AI-Powered Chat Interface** *(Coming Soon)*
+- **Conversational API Discovery**: Describe what you need in natural language
+- **Smart Recommendations**: AI suggests relevant APIs and tools based on your requirements
+- **Interactive Configuration**: Build MCP configurations through guided conversations
+- **Context-Aware Suggestions**: Leverages repository analysis for targeted recommendations
+
+#### 📊 **Intelligent Analysis Workflow**
+
+The UI provides a **5-phase intelligent workflow**:
+
+1. **📁 Input Phase**: Repository selection with examples and advanced options
+2. **🔄 Analysis Phase**: GitIngest processing with real-time progress tracking
+3. **💬 Chat Phase**: AI-powered conversation to understand your needs
+4. **🎯 Confirmation Phase**: Review and confirm detected APIs and tools
+5. **✅ Complete Phase**: Download configurations and get deployment instructions
+
+#### 🎛️ **Advanced Features**
+
+- **Session Management**: Save and restore analysis sessions
+- **Configuration Validation**: Real-time validation with detailed error reporting
+- **Export Options**: Download configurations in multiple formats
+- **Server Testing**: Built-in MCP server testing and validation
+- **History Tracking**: Keep track of all your analysis sessions
+
+### 🖥️ UI Screenshots & Workflow
+
+#### Repository Input Interface
+```
+┌─────────────────────────────────────────────────────────┐
+│  ✨ MCPify ✨                                          │
+│  Turn repositories into MCP servers                     │
+│                                                         │
+│  📁 Repository Input                                    │
+│  ┌─────────────────────────────────────┐ ┌───────────┐  │
+│  │ https://github.com/user/repo        │ │ 🔍 Analyze│  │
+│  └─────────────────────────────────────┘ └───────────┘  │
+│                                                         │
+│  ⚙️ Advanced Options                                    │
+│  • Exclude patterns: *.md, __pycache__/, *.pyc         │
+│  • Max file size: 50 KB                                │
+│  • Detection strategy: auto                             │
+│                                                         │
+│  💡 Try these examples:                                 │
+│  [FastAPI Todo] [Flask Example] [CLI Tool] [API Client]│
+└─────────────────────────────────────────────────────────┘
+```
+
+#### Analysis Progress Tracking
+```
+┌─────────────────────────────────────────────────────────┐
+│  🔄 Analysis Progress                                   │
+│  ████████████████████░░░░ 80%                          │
+│                                                         │
+│  Validating Configuration                               │
+│  Checking configuration validity...                     │
+│                                                         │
+│  ✅ GitIngest  ✅ Detect APIs  🔄 Validate  ⏳ Complete │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### Results Dashboard
+```
+┌─────────────────────────────────────────────────────────┐
+│  ✅ Analysis Complete                                   │
+│                                                         │
+│  📊 Repository: my-fastapi-app    🗂️ Files: 45         │
+│  🐍 Language: Python             ⚡ Framework: FastAPI  │
+│  ⏱️ Time: 12.3s                  📁 Analyzed: 32       │
+│                                                         │
+│  📋 Summary | ⚙️ Configuration | 📊 Validation | 📝 Code│
+│                                                         │
+│  🎉 Generated 8 API tools with FastAPI backend         │
+│  📥 Download Configuration                              │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 🎯 UI Usage Examples
+
+#### Quick Repository Analysis
+```bash
+# Start the UI
+python -m mcpify.ui
+
+# In the browser:
+# 1. Enter: https://github.com/tiangolo/fastapi
+# 2. Click "🔍 Analyze"
+# 3. Wait for analysis completion
+# 4. Download the generated configuration
+```
+
+#### Advanced Configuration
+```bash
+# Start UI with custom settings
+python -m mcpify.ui
+
+# Configure advanced options:
+# • Exclude patterns: "*.md, tests/, docs/"
+# • Max file size: 100 KB
+# • Detection strategy: openai
+# • Include private repos: Yes
+```
+
+### 🔧 UI Configuration
+
+The UI can be customized through environment variables:
+
+```bash
+# Custom port
+export STREAMLIT_SERVER_PORT=8502
+python -m mcpify.ui
+
+# Custom host
+export STREAMLIT_SERVER_ADDRESS=0.0.0.0
+python -m mcpify.ui
+
+# Enable debug mode
+export STREAMLIT_LOGGER_LEVEL=debug
+python -m mcpify.ui
+```
+
+### 🎨 UI Architecture
+
+```
+mcpify/ui/
+├── __init__.py           # UI module exports
+├── main.py              # UI entry point
+├── app.py               # Main Streamlit application
+├── models.py            # Data models for UI
+├── session_manager.py   # Session and history management
+├── components/          # Reusable UI components
+│   ├── __init__.py
+│   ├── chat_interface.py      # AI chat components
+│   ├── sidebar.py             # Navigation sidebar
+│   └── detection_results.py   # Results display
+└── pages/               # Individual page implementations
+    ├── __init__.py
+    └── repository_analyzer.py # Main analyzer page
+```
+
+### 🚀 UI Development
+
+Want to contribute to the UI? Here's how to get started:
+
+```bash
+# Install UI development dependencies
+pip install 'mcpify[ui,dev]'
+
+# Run the UI in development mode
+streamlit run mcpify/ui/app.py --server.runOnSave true
+
+# Run UI tests
+python -m pytest tests/test_ui_*.py -v
+```
+
 ## 📦 Installation
 
 ### Using pip (recommended)
