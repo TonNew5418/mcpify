@@ -5,12 +5,14 @@ This module contains the abstract BaseDetector class that defines the interface
 and common functionality for all detector implementations.
 """
 
+import asyncio
 import re
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from .types import ProjectInfo, ToolSpec
+from .types import DetectionResult, ProjectInfo, ToolSpec
 
 
 class BaseDetector(ABC):
@@ -56,6 +58,56 @@ class BaseDetector(ABC):
         }
 
         return config
+
+    async def detect_project_async(self, code_content: str) -> DetectionResult:
+        """
+        Analyze code content asynchronously and return structured detection result.
+
+        Args:
+            code_content: The code content to analyze (from GitIngest)
+
+        Returns:
+            DetectionResult containing project info, tools, and backend config
+        """
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor() as executor:
+            return await loop.run_in_executor(
+                executor, self._detect_from_content, code_content
+            )
+
+    def _detect_from_content(self, code_content: str) -> DetectionResult:
+        """
+        Analyze code content and return detection result.
+        This method should be overridden by subclasses for content-based analysis.
+
+        Args:
+            code_content: The code content to analyze
+
+        Returns:
+            DetectionResult with detected information
+        """
+        # Default implementation: create a minimal result
+        project_info = ProjectInfo(
+            name="unknown-project",
+            description="Project analyzed from code content",
+            main_files=["main.py"],
+            readme_content="",
+            project_type="library",
+            dependencies=[],
+        )
+
+        tools = []
+        backend_config = {
+            "type": "commandline",
+            "config": {"command": "python", "args": ["main.py"]},
+        }
+
+        return DetectionResult(
+            project_info=project_info,
+            tools=tools,
+            backend_config=backend_config,
+            confidence_score=0.5,
+        )
 
     def _extract_project_info(self, project_path: Path) -> ProjectInfo:
         """Extract basic information about the project."""

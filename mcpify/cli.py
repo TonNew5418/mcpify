@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-from .detect import AstDetector, BaseDetector, CamelDetector, OpenaiDetector
+from .detect import BaseDetector, CamelDetector, OpenaiDetector
 from .validate import print_validation_results, validate_config_file
 from .wrapper import MCPWrapper
 
@@ -121,26 +121,6 @@ def camel_detect_command(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
-def ast_detect_command(args: argparse.Namespace) -> None:
-    """Handle the ast-detect command."""
-    project_path = Path(args.project_path)
-
-    if not project_path.exists():
-        print(f"❌ Error: Project path does not exist: {project_path}")
-        sys.exit(1)
-
-    # Determine output file
-    if args.output:
-        output_file = Path(args.output)
-    else:
-        output_file = Path(_get_output_filename(project_path, "ast"))
-
-    # Create AST detector
-    detector = AstDetector()
-    print("🔍 Using AST analysis for code structure detection...")
-    _run_detection(detector, project_path, output_file)
-
-
 def detect_command(args: argparse.Namespace) -> None:
     """Handle the detect command with auto-selection strategy."""
     project_path = Path(args.project_path)
@@ -177,18 +157,13 @@ def detect_command(args: argparse.Namespace) -> None:
             return
         except Exception as e:
             print(f"⚠️  OpenAI detection failed: {e}")
-            print("📉 Falling back to AST detection...")
+            print("📉 No more fallback strategies available")
 
-    # Fall back to AST detector
-    try:
-        detector = AstDetector()
-        print("🔍 Using AST detection...")
-        _run_detection(detector, project_path, output_file)
-        return
-    except Exception as e:
-        print(f"❌ AST detection failed: {e}")
-        print("❌ No more detection strategies available")
-        sys.exit(1)
+    # No more fallback options
+    print(
+        "❌ No detection strategies available. Please ensure you have API keys for OpenAI or Camel-AI."
+    )
+    sys.exit(1)
 
 
 def view_command(args: argparse.Namespace) -> None:
@@ -325,6 +300,55 @@ def validate_command(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def ui_command(args) -> None:
+    """Launch the web UI for repository analysis."""
+    try:
+        import subprocess
+        from pathlib import Path
+
+        # Get the path to the UI app
+        ui_app_path = Path(__file__).parent / "ui" / "app.py"
+
+        if not ui_app_path.exists():
+            print(f"❌ UI app not found at {ui_app_path}")
+            print("Make sure the UI components are properly installed.")
+            sys.exit(1)
+
+        # Prepare streamlit arguments
+        streamlit_args = [
+            sys.executable,
+            "-m",
+            "streamlit",
+            "run",
+            str(ui_app_path),
+            "--server.address",
+            args.host,
+            "--server.port",
+            str(args.port),
+        ]
+
+        if args.dev:
+            streamlit_args.extend(
+                ["--server.runOnSave", "true", "--server.allowRunOnSave", "true"]
+            )
+
+        print(f"🚀 Starting MCPify UI at http://{args.host}:{args.port}")
+        print("Press Ctrl+C to stop the server")
+
+        # Run streamlit as subprocess
+        subprocess.run(streamlit_args)
+
+    except ImportError:
+        print("❌ Streamlit is not installed.")
+        print("Install it with: pip install 'mcpify[ui]'")
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print("\n👋 MCPify UI stopped")
+    except Exception as e:
+        print(f"❌ Failed to start UI: {e}")
+        sys.exit(1)
+
+
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -369,15 +393,6 @@ def main() -> None:
     )
     camel_parser.add_argument(
         "--model-name", default="gpt-4", help="Model name to use (default: gpt-4)"
-    )
-
-    # AST detection command
-    ast_parser = subparsers.add_parser(
-        "ast-detect", help="Use AST analysis for code structure detection"
-    )
-    ast_parser.add_argument("project_path", help="Path to the project directory")
-    ast_parser.add_argument(
-        "--output", "-o", help="Output file path (default: <project-name>-ast.json)"
     )
 
     # View command
@@ -429,6 +444,27 @@ def main() -> None:
         help="Show detailed validation results",
     )
 
+    # UI command
+    ui_parser = subparsers.add_parser(
+        "ui", help="Launch the web UI for repository analysis"
+    )
+    ui_parser.add_argument(
+        "--host",
+        default="localhost",
+        help="Host to bind the UI server (default: localhost)",
+    )
+    ui_parser.add_argument(
+        "--port",
+        type=int,
+        default=8501,
+        help="Port for the UI server (default: 8501)",
+    )
+    ui_parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Run in development mode with auto-reload",
+    )
+
     args = parser.parse_args()
 
     if args.command == "detect":
@@ -437,14 +473,14 @@ def main() -> None:
         openai_detect_command(args)
     elif args.command == "camel-detect":
         camel_detect_command(args)
-    elif args.command == "ast-detect":
-        ast_detect_command(args)
     elif args.command == "view":
         view_command(args)
     elif args.command == "serve":
         serve_command(args)
     elif args.command == "validate":
         validate_command(args)
+    elif args.command == "ui":
+        ui_command(args)
     else:
         parser.print_help()
         sys.exit(1)

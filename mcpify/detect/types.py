@@ -28,3 +28,18 @@ class ToolSpec:
     description: str
     args: list[str]
     parameters: list[dict[str, Any]]
+
+
+@dataclass
+class DetectionResult:
+    """Result of project detection and analysis."""
+
+    project_info: ProjectInfo
+    tools: list[ToolSpec]
+    backend_config: dict[str, Any]
+    confidence_score: float = 0.8
+
+    def __post_init__(self):
+        """Validate detection result after initialization."""
+        if not (0.0 <= self.confidence_score <= 1.0):
+            raise ValueError("Confidence score must be between 0.0 and 1.0")

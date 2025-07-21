@@ -14,7 +14,7 @@ from typing import Any
 import openai
 
 from .base import BaseDetector
-from .types import ProjectInfo, ToolSpec
+from .types import DetectionResult, ProjectInfo, ToolSpec
 
 
 class OpenaiDetector(BaseDetector):
@@ -259,3 +259,127 @@ class OpenaiDetector(BaseDetector):
         except Exception as e:
             print(f"Warning: Failed to enhance tool {tool.name}: {e}")
             return tool
+
+    def _detect_from_content(self, code_content: str) -> "DetectionResult":
+        """
+        Analyze code content and return detection result.
+
+        Args:
+            code_content: The code content to analyze (from GitIngest)
+
+        Returns:
+            DetectionResult with detected tools and project info
+        """
+        # Extract basic project info from content
+        project_info = self._extract_project_info_from_content(code_content)
+
+        # Use LLM to detect tools
+        tools_data = self._llm_detect_tools(code_content, project_info)
+
+        # Convert to ToolSpec objects
+        tools = []
+        for tool_data in tools_data:
+            try:
+                tool = ToolSpec(
+                    name=tool_data["name"],
+                    description=tool_data["description"],
+                    args=tool_data.get("args", []),
+                    parameters=tool_data.get("parameters", []),
+                )
+                tools.append(tool)
+            except Exception as e:
+                print(
+                    f"Warning: Failed to create tool spec for {tool_data.get('name', 'unknown')}: {e}"
+                )
+
+        # Generate appropriate backend config
+        backend_config = self._generate_backend_config_from_content(project_info)
+
+        return DetectionResult(
+            project_info=project_info,
+            tools=tools,
+            backend_config=backend_config,
+            confidence_score=0.8,
+        )
+
+    def _extract_project_info_from_content(self, code_content: str) -> ProjectInfo:
+        """Extract project information from code content."""
+        # Determine project type from content
+        project_type = "library"  # default
+        if any(
+            pattern in code_content
+            for pattern in [
+                "argparse",
+                "ArgumentParser",
+                "add_argument",
+                "click",
+                "typer",
+            ]
+        ):
+            project_type = "commandline"
+        elif any(
+            pattern in code_content
+            for pattern in ["fastapi", "flask", "django", "app.run", "@app.route"]
+        ):
+            project_type = "web"
+
+        # Extract dependencies from imports
+        dependencies = []
+        import_lines = [
+            line
+            for line in code_content.split("\n")
+            if line.strip().startswith("import ") or line.strip().startswith("from ")
+        ]
+        for line in import_lines:
+            if "import" in line:
+                # Extract module names from import statements
+                parts = line.split()
+                if len(parts) >= 2:
+                    if parts[0] == "import":
+                        dependencies.append(parts[1].split(".")[0])
+                    elif parts[0] == "from":
+                        dependencies.append(parts[1].split(".")[0])
+
+        # Remove standard library modules
+        standard_libs = {
+            "os",
+            "sys",
+            "json",
+            "time",
+            "datetime",
+            "re",
+            "pathlib",
+            "typing",
+            "abc",
+        }
+        dependencies = [dep for dep in set(dependencies) if dep not in standard_libs]
+
+        return ProjectInfo(
+            name="detected-project",
+            description="Project analyzed from code content",
+            main_files=["main.py"],  # placeholder
+            readme_content="",
+            project_type=project_type,
+            dependencies=dependencies,
+        )
+
+    def _generate_backend_config_from_content(
+        self, project_info: ProjectInfo
+    ) -> dict[str, Any]:
+        """Generate backend configuration based on project info."""
+        if project_info.project_type == "commandline":
+            return {
+                "type": "commandline",
+                "config": {
+                    "command": "python3",
+                    "args": ["main.py"],  # Will be updated based on actual file
+                    "cwd": ".",
+                },
+            }
+        elif project_info.project_type == "web":
+            return {
+                "type": "http",
+                "config": {"base_url": "http://localhost:8000", "timeout": 30},
+            }
+        else:
+            return {"type": "python", "config": {"module": "main"}}

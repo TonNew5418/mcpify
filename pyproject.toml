@@ -30,6 +30,7 @@ dependencies = [
     "aiohttp>=3.12.2",
     "mcp[cli]>=1.9.1",
     "openai>=1.0.0",
+    "gitingest>=1.0.3",
 ]
 
 [project.urls]
@@ -42,6 +43,10 @@ Changelog = "https://github.com/muggleji/mcpify/blob/main/CHANGELOG.md"
 [project.optional-dependencies]
 camel = [
     "camel-ai>=0.2.62",
+]
+ui = [
+    "streamlit>=1.28.0",
+    "streamlit-chat>=0.1.1",
 ]
 examples = [
     "fastapi>=0.104.1",
@@ -62,7 +67,7 @@ dev = [
     "safety>=2.3.0",
 ]
 all = [
-    "mcpify[examples,dev]",
+    "mcpify[examples,dev,ui]",
 ]
 
 [project.scripts]
@@ -94,6 +99,7 @@ ignore = [
     "E501", # line too long, handled by formatter
     "B008", # do not perform function calls in argument defaults
     "C901", # too complex
+    "UP007", # use X | Y for type annotations
 ]
 
 [tool.ruff.format]

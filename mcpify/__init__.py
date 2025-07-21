@@ -6,7 +6,6 @@ Model Context Protocol (MCP) servers.
 """
 
 from .detect import (
-    AstDetector,
     BaseDetector,
     CamelDetector,
     OpenaiDetector,
@@ -24,7 +23,6 @@ __all__ = [
     "validate_config_file",
     # Detectors
     "BaseDetector",
-    "AstDetector",
     "CamelDetector",
     "OpenaiDetector",
     "create_detector",
