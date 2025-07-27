@@ -1,31 +1,5 @@
-"""
-MCPify - Automatically detect APIs and generate MCP server configurations.
-
-This package provides tools to analyze existing projects and transform them into
-Model Context Protocol (MCP) servers.
-"""
-
-from .detect import (
-    BaseDetector,
-    CamelDetector,
-    OpenaiDetector,
-    create_detector,
-)
-from .validate import validate_config_dict, validate_config_file
-from .wrapper import MCPWrapper
+"""MCPify - Transform Git repositories into intelligent MCP tools."""
 
 __version__ = "0.1.0"
-
-__all__ = [
-    # Core functionality
-    "MCPWrapper",
-    "validate_config_dict",
-    "validate_config_file",
-    # Detectors
-    "BaseDetector",
-    "CamelDetector",
-    "OpenaiDetector",
-    "create_detector",
-    # Version
-    "__version__",
-]
+__author__ = "MCPify Team"
+__email__ = "team@mcpify.dev"
